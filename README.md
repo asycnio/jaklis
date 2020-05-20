@@ -9,5 +9,7 @@
 Définissez votre clé publique, votre salt Ḡ1 au format PubSec.
 Définissez la publique du destinataire.
 
-```chmod u+x sendmsg.sh
-./sendmsg.sh```
+```
+chmod u+x sendmsg.sh
+./sendmsg.sh
+```
