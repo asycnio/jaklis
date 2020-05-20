@@ -1,7 +1,6 @@
 # Dépendances à installer en amont:
 - Debian 9/10
 - nodejs>8 (Pour JSON.Stringify simplement)
-- base58
 
 # Utilisation
 

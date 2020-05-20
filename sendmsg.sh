@@ -13,8 +13,8 @@ pod="https://data.gchange.fr"								# Adresse du pod Cesium ou Gchange à utili
 
 
 # Récupération et chiffrement du titre et du message
-title=$(./natools.py encrypt -i helloworld/title --pubsec -p DsEx1pS33vzYZg4MroyBV9hCw98j1gtHEhwiZ5tK7ech | base58)
-content=$(./natools.py encrypt -i helloworld/content --pubsec -p DsEx1pS33vzYZg4MroyBV9hCw98j1gtHEhwiZ5tK7ech | base58)
+title=$(./natools.py encrypt -i helloworld/title --pubsec -p DsEx1pS33vzYZg4MroyBV9hCw98j1gtHEhwiZ5tK7ech -O 58)
+content=$(./natools.py encrypt -i helloworld/content --pubsec -p DsEx1pS33vzYZg4MroyBV9hCw98j1gtHEhwiZ5tK7ech -O 58)
 
 times=$(date -u +'%s')
 nonce=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -31,7 +31,7 @@ hash=$(echo "{
 hash=$(node -p "JSON.stringify(\"$hash\")")
 
 # Fabrication de la signature
-signature=$(echo "$hash" | ./natools.py sign --pubsec -k ~/dev/trousseau-Do99s6wQ-g1-PubSec.dunikey --noinc | base64)
+signature=$(echo "$hash" | ./natools.py sign --pubsec -k ~/dev/trousseau-Do99s6wQ-g1-PubSec.dunikey --noinc -O 64)
 
 # Affichage du JSON final
 echo "{
