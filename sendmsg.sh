@@ -21,8 +21,9 @@ times=$(date -u +'%s')
 nonce=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
 # Fabrication du hash
-hash=$(echo "{"issuer" : "$issuer","recipient" : "$recipient","title" : "$title","content" : "$content","time" : "$times","nonce" : "$nonce"}" | sha256sum | awk '{ print $1 }')
-hash=$(node -p "JSON.stringify(\"$hash\")")
+hash="{"issuer" : "$issuer","recipient" : "$recipient","title" : "$title","content" : "$content","time" : "$times","nonce" : "$nonce"}"
+hash="$(printf "%q" "$hash")"
+hash=$(node -p "JSON.stringify(\"$hash\")" | sha256sum | awk '{ print $1 }')
 
 # Fabrication de la signature
 signature=$(echo "$hash" | ./natools.py sign --pubsec -k ~/dev/trousseau-Do99s6wQ-g1-PubSec.dunikey --noinc -O 64)
@@ -35,7 +36,7 @@ echo "{
     "content" : \"$content\",
     "time" : "$times",
     "nonce" : \"$nonce\",
-    "hash" : "$hash",
+    "hash" : \"$hash\",
     "signature" : \"$signature\"
 }"
 
