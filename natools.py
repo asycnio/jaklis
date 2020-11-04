@@ -17,9 +17,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-__version__ = "1.0"
+__version__ = "1.2.2"
 
-import os, sys, duniterpy.key, libnacl.sign, base58, base64
+import os, sys, duniterpy.key, libnacl, libnacl.sign, base58, base64, getpass
 
 def getargv(arg:str, default:str="", n:int=1, args:list=sys.argv) -> str:
 	if arg in args and len(args) > args.index(arg)+n:
@@ -53,17 +53,73 @@ def sign(data, privkey):
 
 def verify(data, pubkey):
 	try:
+		ret = libnacl.sign.Verifier(duniterpy.key.PublicKey(pubkey).hex_pk()).verify(data)
 		sys.stderr.write("Signature OK!\n")
-		return libnacl.sign.Verifier(duniterpy.key.PublicKey(pubkey).hex_pk()).verify(data)
+		return ret
 	except ValueError:
 		sys.stderr.write("Bad signature!\n")
 		exit(1)
 
-def get_privkey(privkey_path, pubsec):
-	if pubsec:
+def get_privkey(privkey_path, privkey_format):
+	if privkey_format == "pubsec":
+		if privkey_path == "*":
+			privkey_path = "privkey.pubsec"
 		return duniterpy.key.SigningKey.from_pubsec_file(privkey_path)
-	else:
+	
+	elif privkey_format == "cred":
+		if privkey_path == "*":
+			privkey_path = "-"
+		if privkey_path == "-":
+			return duniterpy.key.SigningKey.from_credentials(getpass.getpass("Password: "), getpass.getpass("Salt: "))
+		else:
+			return duniterpy.key.SigningKey.from_credentials_file(privkey_path)
+	
+	elif privkey_format == "seedh":
+		if privkey_path == "*":
+			privkey_path = "authfile.seedhex"
 		return duniterpy.key.SigningKey.from_seedhex(read_data(privkey_path, False))
+	
+	elif privkey_format == "wif":
+		if privkey_path == "*":
+			privkey_path = "authfile.wif"
+		return duniterpy.key.SigningKey.from_wif_or_ewif_file(privkey_path)
+	
+	elif privkey_format == "wifh":
+		if privkey_path == "*":
+			privkey_path = "authfile.wif"
+		return duniterpy.key.SigningKey.from_wif_or_ewif_hex(privkey_path)
+	
+	elif privkey_format == "ssb":
+		if privkey_path == "*":
+			privkey_path = "secret"
+		return duniterpy.key.SigningKey.from_ssb_file(privkey_path)
+	
+	elif privkey_format == "key":
+		if privkey_path == "*":
+			privkey_path = "authfile.key"
+		return duniterpy.key.SigningKey.from_private_key(privkey_path)
+	
+	print("Error: unknown privkey format")
+
+def fill_pubkey(pubkey, length=32):
+	while pubkey[0] == 0:
+		pubkey = pubkey[1:]
+	return b"\x00"*(length-len(pubkey)) + pubkey
+
+def pubkey_checksum(pubkey, length=32, clength=3):
+	return base58.b58encode(libnacl.crypto_hash_sha256(libnacl.crypto_hash_sha256(fill_pubkey(base58.b58decode(pubkey), length)))).decode()[:clength]
+
+# returns (pubkey:bytes|None, deprecated_length:bool)
+def check_pubkey(pubkey):
+	if ":" in pubkey:
+		parts = pubkey.split(":")
+		if len(parts[1]) < 3 or len(parts[1]) > 32:
+			return (None, False)
+		for i in range(32, 0, -1):
+			if pubkey_checksum(parts[0], i, len(parts[1])) == parts[1]:
+				return (parts[0], i < 32)
+		return (None, False)
+	return (pubkey, False)
 
 fmt = {
 	"raw": lambda data: data,
@@ -84,18 +140,23 @@ Commands:
   decrypt  Decrypt data
   sign     Sign data
   verify   Verify data
+  pubkey   Display pubkey
+  pk       Display b58 pubkey shorthand
 
 Options:
+  -c         Display pubkey checksum
+  -f <fmt>   Private key format (default: cred)
+   key cred pubsec seedh ssb wif wifh
   -i <path>  Input file path (default: -)
-  -k <path>  Privkey file path (default: authfile.key)
-  --pubsec   Use pub/sec format for -p
-  -p <str>   Pubkey (base58)
-  -o <path>  Output file path (default: -)
+  -k <path>  Privkey file path (* for auto) (default: *)
   --noinc    Do not include msg after signature
+  -o <path>  Output file path (default: -)
   -O <fmt>   Output format: raw 16 32 58 64 64u 85 (default: raw)
+  -p <str>   Pubkey (base58)
   
   --help     Show help
   --version  Show version
+  --debug    Debug mode (display full errors)
 
 Note: "-" means stdin or stdout.
 """)
@@ -110,23 +171,37 @@ if __name__ == "__main__":
 		print(__version__)
 		exit()
 	
+	privkey_format = getargv("-f", "cred")
 	data_path = getargv("-i", "-")
-	privkey_path = getargv("-k", "authfile.key")
-	pubsec = "--pubsec" in sys.argv
+	privkey_path = getargv("-k", "*")
 	pubkey = getargv("-p")
 	result_path = getargv("-o", "-")
 	output_format = getargv("-O", "raw")
 	
+	if pubkey:
+		pubkey, len_deprecated = check_pubkey(pubkey)
+		if not pubkey:
+			print("Invalid pubkey checksum! Please check spelling.")
+			exit(1)
+		if len(base58.b58decode(pubkey)) > 32:
+			print("Invalid pubkey: too long!")
+			exit(1)
+		if len_deprecated:
+			print("Warning: valid pubkey checksum, but deprecated format (truncating zeros)")
+	
 	try:
 		if sys.argv[1] == "encrypt":
+			if not pubkey:
+				print("Please provide pubkey!")
+				exit(1)
 			write_data(fmt[output_format](encrypt(read_data(data_path), pubkey)), result_path)
 		
 		elif sys.argv[1] == "decrypt":
-			write_data(fmt[output_format](decrypt(read_data(data_path), get_privkey(privkey_path, pubsec))), result_path)
+			write_data(fmt[output_format](decrypt(read_data(data_path), get_privkey(privkey_path, privkey_format))), result_path)
 		
 		elif sys.argv[1] == "sign":
 			data = read_data(data_path)
-			signed = sign(data, get_privkey(privkey_path, pubsec))
+			signed = sign(data, get_privkey(privkey_path, privkey_format))
 			
 			if "--noinc" in sys.argv:
 				signed = signed[:len(signed)-len(data)]
@@ -134,13 +209,38 @@ if __name__ == "__main__":
 			write_data(fmt[output_format](signed), result_path)
 		
 		elif sys.argv[1] == "verify":
+			if not pubkey:
+				print("Please provide pubkey!")
+				exit(1)
 			write_data(fmt[output_format](verify(read_data(data_path), pubkey)), result_path)
+		
+		elif sys.argv[1] == "pubkey":
+			if pubkey:
+				if "-c" in sys.argv and output_format == "58":
+					write_data("{}:{}".format(pubkey, pubkey_checksum(pubkey)).encode(), result_path)
+				else:
+					write_data(fmt[output_format](base58.b58decode(pubkey)), result_path)
+			else:
+				pubkey = get_privkey(privkey_path, privkey_format).pubkey
+				if "-c" in sys.argv and output_format == "58":
+					write_data("{}:{}".format(pubkey, pubkey_checksum(pubkey)).encode(), result_path)
+				else:
+					write_data(fmt[output_format](base58.b58decode(pubkey)), result_path)
+		
+		elif sys.argv[1] == "pk":
+			if not pubkey:
+				pubkey = get_privkey(privkey_path, privkey_format).pubkey
+			if "-c" in sys.argv:
+				print("{}:{}".format(pubkey, pubkey_checksum(pubkey)))
+			else:
+				print(pubkey)
 		
 		else:
 			show_help()
 		
 	except Exception as e:
+		if "--debug" in sys.argv:
+			0/0 # DEBUG MODE (raise error when handling error to display backtrace)
 		sys.stderr.write("Error: {}\n".format(e))
 		show_help()
 		exit(1)
-
