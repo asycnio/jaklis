@@ -11,7 +11,7 @@ Par défaut utilise l'émetteur, le fichier de trousseau ainsi que le noeud Cesi
 ## Options
 ```
 ./sendmsg.sh
-    Par défaut, demandez le titre, le contenu et le destinataire en mode interactif.
+    Par défaut, demande le titre, le contenu et le destinataire en mode interactif.
 
 Options:
     -t			Mode test: Utilise le fichier "test.txt" ainsi que le même destinataire que l'émetteur.
