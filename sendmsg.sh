@@ -93,4 +93,11 @@ echo "{
 }"
 
 # Envoi du document
-curl -X POST "$pod/message/inbox" -d "{\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2,\"hash\":\"$hash\",\"signature\":\"$signature\"}"
+curl -X OPTIONS "$pod/message/inbox?pubkey=$issuer" -d "pubkey=$issuer"
+curl -X POST "$pod/message/inbox?pubkey=$issuer" -d "{\"hash\":\"$hash\",\"signature\":\"$signature\",\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2}"
+
+# curl -X OPTIONS "$pod/message/outbox?pubkey=$issuer" -d "pubkey=$issuer"
+# curl -X POST "$pod/message/outbox?pubkey=$issuer" -d "{\"hash\":\"$hash\",\"signature\":\"$signature\",\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2}"
+
+# To put the message as read
+# ,\"read_signature\":\"$signature\"
