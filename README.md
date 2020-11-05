@@ -6,8 +6,10 @@ Ceci est un testeur simple pour l'envoi de messages Cesium +
 chmod u+x sendmsg.sh
 ./sendmsg.sh
 ```
+Par défaut utilise l'émetteur, le fichier de trousseau ainsi que le noeud Cesium+ indiqué dans le fichier `.env`.
 
 ## Options
+```
 ./sendmsg.sh
     Par défaut, demandez le titre, le contenu et le destinataire en mode interactif.
 
@@ -17,3 +19,4 @@ Options:
     -r <pubkey>	Utilise <pubkey> comme destinataire du message.
     -i <pubkey>	Utilise <pubkey> comme émetteur du message.
     -k <key>	Chemin <key> vers le fichier de trousseau PubSec de l'émetteur.
+```

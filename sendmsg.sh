@@ -4,6 +4,7 @@
 # Simple testeur d'envoi de message via la messagerie de Cesium ou de Gchange.
 # ###
 
+[[ ! -f .env ]] && cp .env.template .env
 source .env
 
 # Help display
@@ -48,9 +49,14 @@ if [[ -z $file ]]; then
 else
     message=$(cat $file)
 fi
-
+if [[ -z $issuer ]]; then
+    read -p "Émetteur: " issuer
+fi
 if [[ -z $recipient ]]; then
     read -p "Destinataire: " recipient
+fi
+if [[ -z $dunikey ]]; then
+    read -p "Fichier de trousseau: " dunikey
 fi
 
 [[ -z $(grep -Eo $REGEX_PUBKEYS <<<$recipient) ]] && echo "Le format de la clé publique du destinataire est invalide." && exit 1
