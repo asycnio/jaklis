@@ -19,4 +19,5 @@ Options:
     -r <pubkey>	Utilise <pubkey> comme destinataire du message.
     -i <pubkey>	Utilise <pubkey> comme émetteur du message.
     -k <key>	Chemin <key> vers le fichier de trousseau PubSec de l'émetteur.
+    -h			Affiche cette aide (en anglais).
 ```
