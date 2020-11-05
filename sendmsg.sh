@@ -39,7 +39,7 @@ do
         -k|--key) dunikey="${args[$i+1]}"
             [[ -z $dunikey ]] && echo "Veuillez préciser un fichier de trousseau." && exit 1;;
         -h|--help) helpOpt && exit 0;;
-        *) [[ "${args[$i]}" == "-"* ]] && echo "Option inconnue." && exit 1
+        *) [[ "${args[$i]}" == "-"* ]] && echo "Option inconnue." && exit 1;;
     esac
 done
 
