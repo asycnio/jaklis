@@ -4,6 +4,8 @@
 # Simple testeur d'envoi de message via la messagerie de Cesium ou de Gchange.
 # ###
 
+[[ -z $(which jq) || -z $(which curl) ]] && echo "Installation de jq et curl ..." && sudo apt update && sudo apt install jq curl -y
+
 [[ ! -f .env ]] && cp .env.template .env
 source .env
 
@@ -74,31 +76,26 @@ times=$(date -u +'%s')
 nonce=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
 # Fabrication du hash
-hash="{\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2}"
-hash=$(echo -n "$hash" | sha256sum | cut -d ' ' -f1 | awk '{ print toupper($0) }')
+hashBrut="{\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2}"
+hash=$(echo -n "$hashBrut" | sha256sum | cut -d ' ' -f1 | awk '{ print toupper($0) }')
 
 # Fabrication de la signature
 signature=$(echo -n "$hash" | ./natools.py sign -f pubsec -k $dunikey --noinc -O 64)
 
 # Affichage du JSON final
-echo "{
-    "issuer" : \"$issuer\",
-    "recipient" : \"$recipient\",
-    "title" : \"$title\",
-    "content" : \"$content\",
-    "time" : "$times",
-    "nonce" : \"$nonce\",
-    "version" : 2,
-    "hash" : \"$hash\",
-    "signature" : \"$signature\"
-}"
+document="{\"hash\":\"$hash\",\"signature\":\"$signature\",${hashBrut:1}"
+jq . <<<$document
 
 # Envoi du document
-curl -X OPTIONS "$pod/message/inbox?pubkey=$issuer" -d "pubkey=$issuer"
-curl -X POST "$pod/message/inbox?pubkey=$issuer" -d "{\"hash\":\"$hash\",\"signature\":\"$signature\",\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2}"
+#curl -s -i -X OPTIONS "$pod/message/inbox?pubkey=$issuer" -d "pubkey=$issuer"
+msgID=$(curl -s -X POST "$pod/message/inbox?pubkey=$issuer" -d "$document")
+echo -e "\nMessage ID: $msgID"
 
-# curl -X OPTIONS "$pod/message/outbox?pubkey=$issuer" -d "pubkey=$issuer"
-# curl -X POST "$pod/message/outbox?pubkey=$issuer" -d "{\"hash\":\"$hash\",\"signature\":\"$signature\",\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2}"
+# Delete the message 1 second later, just for test
+sleep 1 && ./deletemsg.sh -id $msgID
+
+# To put the message in outbox too
+# curl -s -X POST "$pod/message/outbox?pubkey=$issuer" -d "$document"
 
 # To put the message as read
 # ,\"read_signature\":\"$signature\"

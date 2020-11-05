@@ -45,23 +45,15 @@ fi
 times=$(date -u +'%s')
 
 # Fabrication du hash
-hash="{\"version\":2,\"index\":\"message\",\"type\":\"$type\",\"id\":\"$id\",\"issuer\":\"$issuer\",\"time\":$times}"
-hash=$(echo -n "$hash" | sha256sum | cut -d ' ' -f1 | awk '{ print toupper($0) }')
+hashBrut="{\"version\":2,\"index\":\"message\",\"type\":\"$type\",\"id\":\"$id\",\"issuer\":\"$issuer\",\"time\":$times}"
+hash=$(echo -n "$hashBrut" | sha256sum | cut -d ' ' -f1 | awk '{ print toupper($0) }')
 
 # Fabrication de la signature
 signature=$(echo -n "$hash" | ./natools.py sign -f pubsec -k $dunikey --noinc -O 64)
 
-# Affichage du JSON final
-echo "{
-    \"version\": 2,
-    \"index\": \"message\",
-    \"type\": \"$type\",
-    \"id\": \"$id\",
-    \"issuer\": \"$issuer\",
-    \"time\": $times,
-    \"hash\": \"$hash\",
-    \"signature\": \"$signature\"
-}"
+document="{\"hash\":\"$hash\",\"signature\":\"$signature\",${hashBrut:1}"
+jq . <<<$document
 
 # Envoi du document
-curl -X POST "$pod/history/delete" -d "{\"version\":2,\"index\":\"message\",\"type\":\"$type\",\"id\":\"$id\",\"issuer\":\"$issuer\",\"time\":$times,\"hash\":\"$hash\",\"signature\":\"$signature\"}"
+curl -s -X POST "$pod/history/delete" -d "$document"
+echo
