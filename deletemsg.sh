@@ -23,6 +23,7 @@ do
             [[ -z $issuer ]] && echo "Veuillez préciser un émetteur." && exit 1;;
         -k|--key) dunikey="${args[$i+1]}"
             [[ -z $dunikey ]] && echo "Veuillez préciser un fichier de trousseau." && exit 1;;
+        *) [[ "${args[$i]}" == "-"* ]] && echo "Option inconnue." && exit 1
     esac
 done
 
