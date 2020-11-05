@@ -1,14 +1,19 @@
-# Dépendances à installer en amont:
-- Debian 9/10
-- nodejs>8 (Pour JSON.Stringify simplement)
+Ceci est un testeur simple pour l'envoi de messages Cesium +
 
 # Utilisation
-
-Éditez le titre et le contenu du message de test dans helloworld si vous voulez.
-Définissez votre clé publique, votre salt Ḡ1 au format PubSec.
-Définissez la publique du destinataire.
 
 ```
 chmod u+x sendmsg.sh
 ./sendmsg.sh
 ```
+
+## Options
+./sendmsg.sh
+    Par défaut, demandez le titre, le contenu et le destinataire en mode interactif.
+
+Options:
+    -t			Mode test: Utilise le fichier "test.txt" ainsi que le même destinataire que l'émetteur.
+    -f <file>	Lit le fichier <file> avec le titre en première ligne et le contenu dans le reste du fichier pour le message.
+    -r <pubkey>	Utilise <pubkey> comme destinataire du message.
+    -i <pubkey>	Utilise <pubkey> comme émetteur du message.
+    -k <key>	Chemin <key> vers le fichier de trousseau PubSec de l'émetteur.

@@ -8,10 +8,16 @@ source .env
 
 # Help display
 helpOpt() {
-    echo -e "This is a simple tester for Cesium+ messages sender)
-    \rOptions:
+    echo -e "This is a simple tester for Cesium+ messages sending
     \r$0
-    Default view show last day data in cumulative mode"
+    Default, ask title, content and recipient in interactive mode.
+
+    \rOptions:
+    -t\t\t\t\tTest mode: Uses the \"test.txt\" file as well as the same recipient as the sender.
+    -f,--file <file>\t\tRead the file <file> with title in first line and content in rest of the file for the message.
+    -r,--recipient <pubkey>\tUses <pubkey> as recipient of the message.
+    -i,--issuer <pubkey>\tUses <pubkey> as issuer of the message.
+    -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer."
 }
 
 REGEX_PUBKEYS="[a-zA-Z0-9]{42,44}"
@@ -23,16 +29,17 @@ do
     case ${args[$i]} in
         -f|--file) file="${args[$i+1]}"
             [[ ! -f $file ]] && echo "Le fichier $file n'existe pas." && exit 1;;
-        -t|--test) file="test.txt";;
+        -t|--test) file="test.txt"
+            recipient=$issuer;;
         -r|--recipient) recipient="${args[$i+1]}"
             [[ -z $recipient ]] && echo "Veuillez préciser un destinataire." && exit 1;;
+        -i|--issuer) issuer="${args[$i+1]}"
+            [[ -z $issuer ]] && echo "Veuillez préciser un émetteur." && exit 1;;
         -k|--key) dunikey="${args[$i+1]}"
             [[ -z $dunikey ]] && echo "Veuillez préciser un fichier de trousseau." && exit 1;;
         -h|--help) helpOpt && exit 0;;
     esac
 done
-
-[[ -z $(grep -Eo $REGEX_PUBKEYS <<<$recipient) ]] && echo "Le format de la clé publique du destinataire est invalide." && exit 1
 
 if [[ -z $file ]]; then
     read -p "Objet du message: " title
@@ -41,6 +48,12 @@ if [[ -z $file ]]; then
 else
     message=$(cat $file)
 fi
+
+if [[ -z $recipient ]]; then
+    read -p "Destinataire: " recipient
+fi
+
+[[ -z $(grep -Eo $REGEX_PUBKEYS <<<$recipient) ]] && echo "Le format de la clé publique du destinataire est invalide." && exit 1
 
 # Récupération et chiffrement du titre et du message
 title=$(head -n1 <<<$message | ./natools.py encrypt --pubsec -p $recipient -O 58)
