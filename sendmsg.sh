@@ -60,6 +60,7 @@ if [[ -z $dunikey ]]; then
 fi
 
 [[ -z $(grep -Eo $REGEX_PUBKEYS <<<$recipient) ]] && echo "Le format de la clé publique du destinataire est invalide." && exit 1
+[[ -z $(grep -Eo $REGEX_PUBKEYS <<<$issuer) ]] && echo "Le format de la clé publique de l'émetteur est invalide." && exit 1
 
 # Récupération et chiffrement du titre et du message
 title=$(head -n1 <<<$message | ./natools.py encrypt --pubsec -p $recipient -O 58)
@@ -91,5 +92,5 @@ echo "{
     "signature" : \"$signature\"
 }"
 
-# Envoi du document à
+# Envoi du document
 curl -X POST "$pod/message/inbox" -d "{\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2,\"hash\":\"$hash\",\"signature\":\"$signature\"}"
