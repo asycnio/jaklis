@@ -9,13 +9,26 @@ source .env
 
 REGEX_PUBKEYS="[a-zA-Z0-9]{42,44}"
 
+# Help display
+helpOpt() {
+    echo -e "Cesium+ messages deleting
+    Default: ID in interactive mode.
+    Advice: Fill your .env file for more fun.
+    Example: $0 <ID du message>
+
+    \rOptions:
+    -id,--id <ID du message>\tDelete the message with ID <id>.
+    -i,--issuer <pubkey>\tUses <pubkey> as issuer of the message.
+    -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer.
+    -o,--outbox\t\t\tDelete outbox messages instead of inbox
+    -h,--help\t\t\tDisplay this help"
+}
+
 # Parse options
 declare -a args=($@)
 for ((i=0; i<${#args[*]}; ++i))
 do
     case ${args[$i]} in
-        -t|--test) file="test.txt"
-            recipient=$issuer;;
 		-o|--outbox) type=outbox;;
         -id|--id) id="${args[$i+1]}"
             [[ -z $id ]] && echo "Veuillez préciser un ID de message." && exit 1;;
@@ -23,6 +36,7 @@ do
             [[ -z $issuer ]] && echo "Veuillez préciser un émetteur." && exit 1;;
         -k|--key) dunikey="${args[$i+1]}"
             [[ -z $dunikey ]] && echo "Veuillez préciser un fichier de trousseau." && exit 1;;
+        -h|--help) helpOpt && exit 0;;
         *) [[ "${args[$i]}" == "-"* ]] && echo "Option inconnue." && exit 1;;
     esac
 done
@@ -30,6 +44,7 @@ done
 if [[ -z $type ]]; then
     type="inbox"
 fi
+[[ -z $id ]] && id=$1
 if [[ -z $id ]]; then
     read -p "ID de message: " ID
 fi

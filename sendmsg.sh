@@ -11,16 +11,18 @@ source .env
 
 # Help display
 helpOpt() {
-    echo -e "This is a simple tester for Cesium+ messages sending
-    \r$0
-    Default, ask title, content and recipient in interactive mode.
+    echo -e "Cesium+ messages sender
+    Default: ask title, content and recipient in interactive mode.
+    Advice: Fill your .env file for more fun.
+    Example: $0 -f <Path of file content message> -r <recipient pubkey> -i <issuer pubkey> -k <path of pubsec keychain of issuer>
 
     \rOptions:
     -t\t\t\t\tTest mode: Uses the \"test.txt\" file as well as the same recipient as the sender.
     -f,--file <file>\t\tRead the file <file> with title in first line and content in rest of the file for the message.
     -r,--recipient <pubkey>\tUses <pubkey> as recipient of the message.
-    -i,--issuer <pubkey>\tUses <pubkey> as issuer of the message.
-    -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer."
+    -i,--issuer <pubkey>\tUses <pubkey> as issuer of the message (Could be remove in future version by calculating pubkey from privatekey).
+    -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer.
+    -h,--help\t\t\tDisplay this help"
 }
 
 REGEX_PUBKEYS="[a-zA-Z0-9]{42,44}"

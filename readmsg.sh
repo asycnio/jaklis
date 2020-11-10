@@ -11,13 +11,17 @@ source .env
 
 # Help display
 helpOpt() {
-    echo -e "This is a simple tester for Cesium+ messages sending
+    echo -e "Cesium+ messages sender
     \r$0
-    Default, ask title, content and recipient in interactive mode.
+    Default: ask recipient in interactive mode.
+    Advice: Fill your .env file for more fun.
 
     \rOptions:
     -r,--recipient <pubkey>\tUses <pubkey> as recipient of the messages.
-    -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer."
+    -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer.
+    -n,--number <number>\tDisplay the <number> lasts messages from Cesium (tail-like format)
+    -o,--outbox\t\t\tRead outbox messages instead of inbox
+    -h,--help\t\t\tDisplay this help"
 }
 
 REGEX_PUBKEYS="[a-zA-Z0-9]{42,44}"
@@ -34,7 +38,7 @@ do
         -k|--key) dunikey="${args[$i+1]}"
             [[ -z $dunikey ]] && echo "Veuillez préciser un fichier de trousseau." && exit 1;;
         -o|--outbox) type=outbox;;
-        -n|--numbers) nbrRaw="${args[$i+1]}";;
+        -n|--number) nbrRaw="${args[$i+1]}";;
         -n*) nbrRaw="${args[$i]:2}";;
         -h|--help) helpOpt && exit 0;;
         *) [[ "${args[$i]}" == "-"* ]] && echo "Option inconnue." && exit 1;;
