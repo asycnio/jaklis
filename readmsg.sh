@@ -59,7 +59,7 @@ fi
 document="{\"sort\":{\"time\":\"desc\"},\"from\":0,\"size\":$nbrRaw,\"_source\":[\"issuer\",\"recipient\",\"title\",\"content\",\"time\",\"nonce\",\"read_signature\"],\"query\":{\"bool\":{\"filter\":{\"term\":{\"recipient\":\"$recipient\"}}}}}"
 
 # Envoi du document
-msgContent=$(curl -s -X POST "https://g1.data.duniter.fr/message/$type/_search" -d "$document" | jq .hits.hits[]._source -c)
+msgContent=$(curl -s -X POST "$pod/message/$type/_search" -d "$document" | jq .hits.hits[]._source -c)
 
 #Traitement des données
 n=0
