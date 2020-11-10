@@ -52,9 +52,6 @@ fi
 
 [[ -z $(grep -Eo $REGEX_PUBKEYS <<<$recipient) ]] && echo "Le format de la clé publique du destinataire est invalide." && exit 1
 
-times=$(date -u +'%s')
-nonce=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-
 document="{\"sort\":{\"time\":\"desc\"},\"from\":0,\"size\":$nbrRaw,\"_source\":[\"issuer\",\"recipient\",\"title\",\"content\",\"time\",\"nonce\",\"read_signature\"],\"query\":{\"bool\":{\"filter\":{\"term\":{\"recipient\":\"$recipient\"}}}}}"
 
 # Envoi du document
@@ -64,7 +61,6 @@ msgContent=$(curl -s -X POST "https://g1.data.duniter.fr/message/$type/_search" 
 n=0
 for i in $msgContent; do
     echo -e "=== $n ===\n"
-    #totalMsg='{'$(jq -r .total <<<"$i")'}'
     dataObj=($(jq -r '.issuer,.recipient,.nonce,.title,.content,.time' <<<"$i"))
     issuer="${dataObj[0]}"
     recipient="${dataObj[1]}"
@@ -73,10 +69,10 @@ for i in $msgContent; do
     content="${dataObj[4]}"
     time="${dataObj[5]}"
 
-    # python3 decrypt.py "$issuer" "$duniSeed" "$nonce" "$title" "$content"
-    titleClear=$(./natools.py box-decrypt -p "$issuer" -n "$nonce" -f pubsec -k "$dunikey" <<<"$title")
+    titleClear=$(./natools.py box-decrypt -p $issuer -f pubsec -k $dunikey -n $nonce -I 64 <<< "${title}")
+    contentClear=$(./natools.py box-decrypt -p $issuer -f pubsec -k $dunikey -n $nonce -I 64 <<< "${content}")
     echo "$titleClear"
+    echo "$contentClear"
     echo "========="
     ((n++))
 done
-

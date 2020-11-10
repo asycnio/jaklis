@@ -17,9 +17,9 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-__version__ = "1.2.2"
+__version__ = "1.3.1"
 
-import os, sys, duniterpy.key, libnacl, libnacl.sign, base58, base64, getpass
+import os, sys, duniterpy.key, libnacl, base58, base64, getpass
 
 def getargv(arg:str, default:str="", n:int=1, args:list=sys.argv) -> str:
 	if arg in args and len(args) > args.index(arg)+n:
@@ -30,7 +30,7 @@ def getargv(arg:str, default:str="", n:int=1, args:list=sys.argv) -> str:
 def read_data(data_path, b=True):
 	if data_path == "-":
 		if b:
-			return sys.stdin.read().encode()
+			return sys.stdin.buffer.read()
 		else:
 			return sys.stdin.read()
 	else:
@@ -47,6 +47,23 @@ def encrypt(data, pubkey):
 
 def decrypt(data, privkey):
 	return privkey.decrypt_seal(data)
+
+def box_encrypt(data, privkey, pubkey, nonce=None, attach_nonce=False):
+	signer = libnacl.sign.Signer(privkey.seed)
+	sk = libnacl.public.SecretKey(libnacl.crypto_sign_ed25519_sk_to_curve25519(signer.sk))
+	verifier = libnacl.sign.Verifier(base58.b58decode(pubkey).hex())
+	pk = libnacl.public.PublicKey(libnacl.crypto_sign_ed25519_pk_to_curve25519(verifier.vk))
+	box = libnacl.public.Box(sk.sk, pk.pk)
+	data = box.encrypt(data, nonce) if nonce else box.encrypt(data)
+	return data if attach_nonce else data[24:]
+
+def box_decrypt(data, privkey, pubkey, nonce=None):
+	signer = libnacl.sign.Signer(privkey.seed)
+	sk = libnacl.public.SecretKey(libnacl.crypto_sign_ed25519_sk_to_curve25519(signer.sk))
+	verifier = libnacl.sign.Verifier(base58.b58decode(pubkey).hex())
+	pk = libnacl.public.PublicKey(libnacl.crypto_sign_ed25519_pk_to_curve25519(verifier.vk))
+	box = libnacl.public.Box(sk.sk, pk.pk)
+	return box.decrypt(data, nonce) if nonce else box.decrypt(data)
 
 def sign(data, privkey):
 	return privkey.sign(data)
@@ -131,24 +148,38 @@ fmt = {
 	"85": lambda data: base64.b85encode(data),
 }
 
+defmt = {
+	"raw": lambda data: data,
+	"16": lambda data: bytes.fromhex(data),
+	"32": lambda data: base64.b32decode(data),
+	"58": lambda data: base58.b58decode(data),
+	"64": lambda data: base64.b64decode(data),
+	"85": lambda data: base64.b85decode(data),
+}
+
 def show_help():
 	print("""Usage:
 python3 natools.py <command> [options]
 
 Commands:
-  encrypt  Encrypt data
-  decrypt  Decrypt data
-  sign     Sign data
-  verify   Verify data
-  pubkey   Display pubkey
-  pk       Display b58 pubkey shorthand
+  encrypt      Encrypt data
+  decrypt      Decrypt data
+  box-encrypt  Encrypt data (NaCl box)
+  box-decrypt  Decrypt data (NaCl box)
+  sign         Sign data
+  verify       Verify data
+  pubkey       Display pubkey
+  pk           Display b58 pubkey shorthand
 
 Options:
   -c         Display pubkey checksum
   -f <fmt>   Private key format (default: cred)
    key cred pubsec seedh ssb wif wifh
   -i <path>  Input file path (default: -)
+  -I <fmt>   Input format: raw 16 32 58 64 85 (default: raw)
   -k <path>  Privkey file path (* for auto) (default: *)
+  -n <nonce> Nonce (b64, 24 bytes) (for NaCl box)
+  -N         Attach nonce to output (for NaCl box encryption)
   --noinc    Do not include msg after signature
   -o <path>  Output file path (default: -)
   -O <fmt>   Output format: raw 16 32 58 64 64u 85 (default: raw)
@@ -177,6 +208,7 @@ if __name__ == "__main__":
 	pubkey = getargv("-p")
 	result_path = getargv("-o", "-")
 	output_format = getargv("-O", "raw")
+	input_format = getargv("-I", "raw")
 	
 	if pubkey:
 		pubkey, len_deprecated = check_pubkey(pubkey)
@@ -194,13 +226,32 @@ if __name__ == "__main__":
 			if not pubkey:
 				print("Please provide pubkey!")
 				exit(1)
-			write_data(fmt[output_format](encrypt(read_data(data_path), pubkey)), result_path)
+			write_data(fmt[output_format](encrypt(defmt[input_format](read_data(data_path)), pubkey)), result_path)
 		
 		elif sys.argv[1] == "decrypt":
-			write_data(fmt[output_format](decrypt(read_data(data_path), get_privkey(privkey_path, privkey_format))), result_path)
+			write_data(fmt[output_format](decrypt(defmt[input_format](read_data(data_path)), get_privkey(privkey_path, privkey_format))), result_path)
+		
+		elif sys.argv[1] == "box-encrypt":
+			if not pubkey:
+				print("Please provide pubkey!")
+				exit(1)
+			nonce = getargv("-n", None)
+			if nonce:
+				nonce = base64.b64decode(nonce)
+			attach_nonce = "-N" in sys.argv
+			write_data(fmt[output_format](box_encrypt(defmt[input_format](read_data(data_path)), get_privkey(privkey_path, privkey_format), pubkey, nonce, attach_nonce)), result_path)
+		
+		elif sys.argv[1] == "box-decrypt":
+			if not pubkey:
+				print("Please provide pubkey!")
+				exit(1)
+			nonce = getargv("-n", None)
+			if nonce:
+				nonce = base64.b64decode(nonce)
+			write_data(fmt[output_format](box_decrypt(defmt[input_format](read_data(data_path)), get_privkey(privkey_path, privkey_format), pubkey, nonce)), result_path)
 		
 		elif sys.argv[1] == "sign":
-			data = read_data(data_path)
+			data = defmt[input_format](read_data(data_path))
 			signed = sign(data, get_privkey(privkey_path, privkey_format))
 			
 			if "--noinc" in sys.argv:
@@ -212,7 +263,7 @@ if __name__ == "__main__":
 			if not pubkey:
 				print("Please provide pubkey!")
 				exit(1)
-			write_data(fmt[output_format](verify(read_data(data_path), pubkey)), result_path)
+			write_data(fmt[output_format](verify(defmt[input_format](read_data(data_path)), pubkey)), result_path)
 		
 		elif sys.argv[1] == "pubkey":
 			if pubkey:

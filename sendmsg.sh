@@ -66,17 +66,15 @@ fi
 [[ -z $(grep -Eo $REGEX_PUBKEYS <<<$issuer) ]] && echo "Le format de la clé publique de l'émetteur est invalide." && exit 1
 
 # Récupération et chiffrement du titre et du message
-title=$(head -n1 <<<$message | ./natools.py encrypt --pubsec -p $recipient -O 58)
-content=$(tail -n+2 <<<$message | ./natools.py encrypt --pubsec -p $recipient -O 58)
-
-# title="78FPlouMe63I49IzyNY1B2Uh6s8mBBoBZA=="
-# content="78FPlouMe63I49IzyNY1B2Uh6s8mBBoBZA=="
+nonce=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+b58nonce=$(echo $nonce | base64 -d | base58)
+title=$(head -n1 <<<$message | ./natools.py box-encrypt -n $nonce -f pubsec -k $dunikey -p $recipient -O 64)
+content=$(tail -n+2 <<<$message | ./natools.py box-encrypt -n $nonce -f pubsec -k $dunikey -p $recipient -O 64)
 
 times=$(date -u +'%s')
-nonce=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
 # Fabrication du hash
-hashBrut="{\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$nonce\",\"version\":2}"
+hashBrut="{\"issuer\":\"$issuer\",\"recipient\":\"$recipient\",\"title\":\"$title\",\"content\":\"$content\",\"time\":$times,\"nonce\":\"$b58nonce\",\"version\":2}"
 hash=$(echo -n "$hashBrut" | sha256sum | cut -d ' ' -f1 | awk '{ print toupper($0) }')
 
 # Fabrication de la signature
@@ -88,14 +86,17 @@ jq . <<<$document
 
 # Envoi du document
 #curl -s -i -X OPTIONS "$pod/message/inbox?pubkey=$issuer" -d "pubkey=$issuer"
-msgID=$(curl -s -X POST "$pod/message/inbox?pubkey=$issuer" -d "$document")
+msgID=$(curl -s -X POST "$pod/message/inbox?pubkey=$recipient" -d "$document")
 echo -e "\nMessage ID: $msgID"
 
+
+### Tests mode ###
+
 # Delete the message 1 second later, just for test
-sleep 1 && ./deletemsg.sh -id $msgID
+#sleep 1 && ./deletemsg.sh -id $msgID
 
 # To put the message in outbox too
-# curl -s -X POST "$pod/message/outbox?pubkey=$issuer" -d "$document"
+#curl -s -X POST "$pod/message/outbox?pubkey=$issuer" -d "$document"
 
-# To put the message as read
-# ,\"read_signature\":\"$signature\"
+# To put the message as read, ad this at the end of document
+#,\"read_signature\":\"$signature\"
