@@ -13,7 +13,7 @@ Si non renseigné ni dans le fichier `.env` ni en argument de la commande, alors
 ./readmsg.sh
 ```
 
-### Options
+_Options_:
 ```
     -r,--recipient <pubkey>	Uses <pubkey> as recipient of the messages.
     -k,--key <key>		Path <key> to the pubsec keychain file of the issuer.
@@ -27,7 +27,7 @@ Si non renseigné ni dans le fichier `.env` ni en argument de la commande, alors
 ./sendmsg.sh
 ```
 
-### Options
+_Options_:
 ```
     -t				Test mode: Uses the "test.txt" file as well as the same recipient as the sender.
     -f,--file <file>		Read the file <file> with title in first line and content in rest of the file for the message.
@@ -39,10 +39,10 @@ Si non renseigné ni dans le fichier `.env` ni en argument de la commande, alors
 
 ## Suppression de messages
 ```
-./sendmsg.sh
+./deletemsg.sh
 ```
 
-### Options
+_Options_:
 ```
     -id,--id <ID du message>	Delete the message with ID <id>.
     -i,--issuer <pubkey>	Uses <pubkey> as issuer of the message.
