@@ -1,6 +1,7 @@
-Ceci est un testeur simple pour l'envoi de messages Cesium +
+# Utilisation de la messagerie Cesium+/Gchange
+## Réception/Envoi/Suppression de messages
 
-# Utilisation
+## Utilisation
 
 ```
 chmod u+x readmsg.sh sendmsg.sh deletemsg.sh
@@ -8,7 +9,7 @@ chmod u+x readmsg.sh sendmsg.sh deletemsg.sh
 Par défaut utilise l'émetteur, le fichier de trousseau ainsi que le noeud Cesium+ indiqué dans le fichier `.env`.
 Si non renseigné ni dans le fichier `.env` ni en argument de la commande, alors ils seront demandés interactivement.
 
-## Lecture des messages
+### Lecture des messages
 ```
 ./readmsg.sh
 ```
@@ -22,7 +23,7 @@ _Options_:
     -h,--help			Display this help
 ```
 
-## Envoi de messages
+### Envoi de messages
 ```
 ./sendmsg.sh
 ```
@@ -37,7 +38,7 @@ _Options_:
     -h,--help			Display this help
 ```
 
-## Suppression de messages
+### Suppression de messages
 ```
 ./deletemsg.sh
 ```
