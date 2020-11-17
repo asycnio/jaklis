@@ -14,13 +14,12 @@ helpOpt() {
     echo -e "Cesium+ messages sender
     Default: ask title, content and recipient in interactive mode.
     Advice: Fill your .env file for more fun.
-    Example: $0 -f <Path of file content message> -r <recipient pubkey> -i <issuer pubkey> -k <path of pubsec keychain of issuer>
+    Example: $0 -f <Path of file content message> -r <recipient pubkey> -k <path of pubsec keychain of issuer>
 
     \rOptions:
     -t\t\t\t\tTest mode: Uses the \"test.txt\" file as well as the same recipient as the sender.
     -f,--file <file>\t\tRead the file <file> with title in first line and content in rest of the file for the message.
     -r,--recipient <pubkey>\tUses <pubkey> as recipient of the message.
-    -i,--issuer <pubkey>\tUses <pubkey> as issuer of the message (Could be remove in future version by calculating pubkey from privatekey).
     -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer.
     -h,--help\t\t\tDisplay this help"
 }
@@ -35,17 +34,21 @@ do
         -f|--file) file="${args[$i+1]}"
             [[ ! -f $file ]] && echo "Le fichier $file n'existe pas." && exit 1;;
         -t|--test) file="test.txt"
+            issuer=$(./natools.py pk -f pubsec -k $dunikey)
             recipient=$issuer;;
         -r|--recipient) recipient="${args[$i+1]}"
             [[ -z $recipient ]] && echo "Veuillez préciser un destinataire." && exit 1;;
-        -i|--issuer) issuer="${args[$i+1]}"
-            [[ -z $issuer ]] && echo "Veuillez préciser un émetteur." && exit 1;;
         -k|--key) dunikey="${args[$i+1]}"
             [[ -z $dunikey ]] && echo "Veuillez préciser un fichier de trousseau." && exit 1;;
         -h|--help) helpOpt && exit 0;;
         *) [[ "${args[$i]}" == "-"* ]] && echo "Option inconnue." && exit 1;;
     esac
 done
+
+if [[ -z $dunikey ]]; then
+    read -p "Fichier de trousseau: " dunikey
+fi
+issuer=$(./natools.py pk -f pubsec -k $dunikey)
 
 if [[ -z $file ]]; then
     read -p "Objet du message: " title
@@ -54,14 +57,8 @@ if [[ -z $file ]]; then
 else
     message=$(cat $file)
 fi
-if [[ -z $issuer ]]; then
-    read -p "Émetteur: " issuer
-fi
 if [[ -z $recipient ]]; then
     read -p "Destinataire: " recipient
-fi
-if [[ -z $dunikey ]]; then
-    read -p "Fichier de trousseau: " dunikey
 fi
 
 [[ -z $(grep -Eo $REGEX_PUBKEYS <<<$recipient) ]] && echo "Le format de la clé publique du destinataire est invalide." && exit 1
@@ -100,5 +97,5 @@ echo -e "\nMessage ID: $msgID"
 # To put the message in outbox too
 #curl -s -X POST "$pod/message/outbox?pubkey=$issuer" -d "$document"
 
-# To put the message as read, ad this at the end of document
+# To put the message as read, add this at the end of document
 #,\"read_signature\":\"$signature\"

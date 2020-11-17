@@ -17,7 +17,6 @@ helpOpt() {
     Advice: Fill your .env file for more fun.
 
     \rOptions:
-    -r,--recipient <pubkey>\tUses <pubkey> as recipient of the messages.
     -k,--key <key>\t\tPath <key> to the pubsec keychain file of the issuer.
     -n,--number <number>\tDisplay the <number> lasts messages from Cesium (tail-like format)
     -o,--outbox\t\t\tRead outbox messages instead of inbox
@@ -33,8 +32,6 @@ declare -a args=($@)
 for ((i=0; i<${#args[*]}; ++i))
 do
     case ${args[$i]} in
-        -r|--recipient) recipient="${args[$i+1]}"
-            [[ -z $recipient ]] && echo "Veuillez préciser un destinataire." && exit 1;;
         -k|--key) dunikey="${args[$i+1]}"
             [[ -z $dunikey ]] && echo "Veuillez préciser un fichier de trousseau." && exit 1;;
         -o|--outbox) type=outbox;;
@@ -45,9 +42,8 @@ do
     esac
 done
 
-if [[ -z $recipient ]]; then
-    read -p "Clé publique de l'utilisateur: " recipient
-fi
+
+recipient=$(./natools.py pk -f pubsec -k $dunikey)
 if [[ -z $dunikey ]]; then
     read -p "Fichier de trousseau: " dunikey
 fi
@@ -79,4 +75,8 @@ for i in $msgContent; do
     echo "$contentClear"
     echo "========="
     ((n++))
+#    echo "./natools.py box-decrypt -p $issuer -f pubsec -k $dunikey -n $nonce -I 64 <<< \"${title}\""
 done
+
+#echo "$msgContent" | jq
+
