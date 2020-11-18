@@ -1,2 +1,5 @@
+wheel
+base58
+pybase64
 duniterpy
 termcolor
