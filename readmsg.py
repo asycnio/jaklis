@@ -2,8 +2,10 @@
 
 import os, sys, requests, json, base58, base64
 from userEnv import dunikey, pod
-from natools import fmt, sign, get_privkey
+from natools import fmt, sign, get_privkey, box_decrypt
 from datetime import datetime
+
+rows = int(os.popen('stty size', 'r').read().split()[1])
 
 #recipient = sys.argv[1]
 recipient = get_privkey(dunikey, "pubsec").pubkey
@@ -46,16 +48,18 @@ for hits in msgJSON["hits"]:
     isMsg = hits["_id"]
     msgSrc = hits["_source"]
     issuer = msgSrc["issuer"]
-    title = msgSrc["title"]
-    content = msgSrc["content"]
     nonce = msgSrc["nonce"]
-    date = datetime.fromtimestamp(msgSrc["time"]).strftime("Le %d/%m/%Y à %H:%M")
+    nonce = base58.b58decode(nonce)
+    title = base64.b64decode(msgSrc["title"])
+    title = box_decrypt(title, get_privkey(dunikey, "pubsec"), issuer, nonce).decode()
+    content = base64.b64decode(msgSrc["content"])
+    content = box_decrypt(content, get_privkey(dunikey, "pubsec"), issuer, nonce).decode()
 
+    date = datetime.fromtimestamp(msgSrc["time"]).strftime(", le %d/%m/%Y à %H:%M  ")
 
-    print("----------")
-    print(date)
+    headerMsg = "  De " + issuer + date
+    print('-'.center(rows, '-'))
+    print(headerMsg.center(rows, '-'))
+    print('-'.center(rows, '-'))
     print("Objet: " + title)
-    print("Message: " + content)
-
-
-
+    print(content)
