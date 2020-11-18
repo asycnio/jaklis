@@ -6,6 +6,8 @@ if not os.path.isfile("userEnv.py"):
   copyfile("userEnv.py.template", "userEnv.py")
 try:
     from userEnv import dunikey, pod
+    if dunikey == "":
+        raise ValueError("Dunikey is empty")
 except:
     sys.stderr.write("Please fill the path to your private key (PubSec), and a Cesium ES address in userEnv.py\n")
     sys.exit(1)

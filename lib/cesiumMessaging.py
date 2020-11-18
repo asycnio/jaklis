@@ -11,6 +11,8 @@ class ReadFromCesium:
         # Get my pubkey from my private key
         try:
             self.dunikey = dunikey
+            if dunikey == "":
+                raise ValueError("Dunikey is empty")
         except:
             sys.stderr.write("Please fill the path to your private key (PubSec)\n")
             sys.exit(1)
