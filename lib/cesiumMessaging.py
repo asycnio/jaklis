@@ -3,6 +3,7 @@
 import os, sys, requests, json, base58, base64
 from natools import fmt, sign, get_privkey, box_decrypt
 from datetime import datetime
+from termcolor import colored
 
 
 class ReadCesium:
@@ -70,7 +71,7 @@ class ReadCesium:
 
         self.total = msgJSON["total"]
         infoTotal = "  Nombre de messages: " + str(self.total) + "  "
-        print(infoTotal.center(rows, '#'))
+        print(colored(infoTotal.center(rows, '#'), "yellow"))
         for hits in msgJSON["hits"]:
             self.idMsg = hits["_id"]
             msgSrc = hits["_source"]
@@ -83,10 +84,10 @@ class ReadCesium:
             self.content = box_decrypt(self.content, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
             self.dateS = msgSrc["time"]
             date = datetime.fromtimestamp(self.dateS).strftime(", le %d/%m/%Y à %H:%M  ")
-            headerMsg = "  De " + self.issuer + date + "(ID: {})".format(self.idMsg)
+            headerMsg = "  De " + self.issuer + date + "(ID: {})".format(self.idMsg) + "  "
 
             print('-'.center(rows, '-'))
-            print(headerMsg.center(rows, '-'))
+            print(colored(headerMsg, "blue").center(rows+9, '-'))
             print('-'.center(rows, '-'))
             print("Objet: " + self.title)
             print(self.content)

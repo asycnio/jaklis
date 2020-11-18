@@ -21,5 +21,5 @@ args = parser.parse_args()
 messages = ReadCesium(dunikey, pod)
 messages.read(args.number, args.outbox)
 
-# For debug, print complete JSON answer
-# print(messages.sendDocument(args.number, args.outbox))
+# print(messages.sendDocument(args.number, args.outbox)) # For debug, print complete JSON answer
+
