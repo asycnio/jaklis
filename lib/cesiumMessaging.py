@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, ast, requests, json, base58, base64, time, string, random
+import os, sys, ast, requests, json, base58, base64, time, string, random, re
 from natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
 from hashlib import sha256
 from datetime import datetime
@@ -20,6 +20,10 @@ class ReadFromCesium:
 
         self.recipient = get_privkey(dunikey, "pubsec").pubkey
         self.pod = pod
+
+        if not re.match(r"(?![OIl])[1-9A-Za-z]{42,45}", self.recipient):
+            sys.stderr.write("La clé publique n'est pas au bon format.\n")
+            sys.exit(1)
 
     # Configure JSON document to send
     def configDoc(self, nbrMsg, outbox):
@@ -128,6 +132,10 @@ class SendToCesium:
             nonce.append(random.choice(string.ascii_letters + string.digits))
         self.nonce = base64.b64decode(''.join(nonce))
 
+        if not re.match(r"(?![OIl])[1-9A-Za-z]{42,45}", recipient):
+            sys.stderr.write("La clé publique n'est pas au bon format.\n")
+            sys.exit(1)
+
 
     def encryptMsg(self, msg):
         return fmt["64"](box_encrypt(msg.encode(), get_privkey(self.dunikey, "pubsec"), self.issuer, self.nonce)).decode()
@@ -149,7 +157,6 @@ class SendToCesium:
 
         # Build final document
         finalDoc = '{' + '"hash":"{0}","signature":"{1}",'.format(hashDoc, signature) + document[1:]
-        # document="{\"hash\":\"$hash\",\"signature\":\"$signature\",${hashBrut:1}"
 
         return finalDoc
 
@@ -168,14 +175,83 @@ class SendToCesium:
         try:
             result = requests.post('{0}/message/{1}?pubkey={2}'.format(self.pod, boxType, self.recipient), headers=headers, data=document)
         except Exception as e:
-            sys.stderr.write("Impossible d'envyer le message:\n" + str(e))
+            sys.stderr.write("Impossible d'envoyer le message:\n" + str(e))
             sys.exit(1)
         else:
-            print(result.text)
+            print(colored("Message envoyé avec succès !", "green"))
+            print("ID: " + result.text)
             return result
 
 
     def send(self, title, msg):
         finalDoc = self.configDoc(self.encryptMsg(title), self.encryptMsg(msg))     # Configure JSON document to send
         self.sendDocument(finalDoc)                                                 # Send final signed document
+
+
+
+
+#################### Deleting class ####################
+
+
+
+
+class DeleteFromCesium:
+    def __init__(self, dunikey, pod, outbox):
+        # Get my pubkey from my private key
+        try:
+            self.dunikey = dunikey
+        except:
+            sys.stderr.write("Please fill the path to your private key (PubSec)\n")
+            sys.exit(1)
+
+        self.issuer = get_privkey(dunikey, "pubsec").pubkey
+        self.pod = pod
+        self.outbox = outbox
+
+
+    def configDoc(self, idMsg):
+        # Get current timestamp
+        timeSent = int(time.time())
+
+        # Generate document to customize
+
+        if self.outbox:
+            boxType = "outbox"
+        else:
+            boxType = "inbox"
+
+        document = str({"version":2,"index":"message","type":boxType,"id":idMsg,"issuer":self.issuer,"time":timeSent}).replace("'",'"')
+        # "{\"version\":2,\"index\":\"message\",\"type\":\"$type\",\"id\":\"$id\",\"issuer\":\"$issuer\",\"time\":$times}"
+
+        # Generate hash of document
+        hashDoc = sha256(document.encode()).hexdigest().upper()
+
+        # Generate signature of document
+        signature = fmt["64"](sign(hashDoc.encode(), get_privkey(self.dunikey, "pubsec"))[:-len(hashDoc.encode())]).decode()
+
+        # Build final document
+        finalDoc = '{' + '"hash":"{0}","signature":"{1}",'.format(hashDoc, signature) + document[1:]
+
+        return finalDoc
+
+    def sendDocument(self, document):
+        headers = {
+            'Content-type': 'application/json',
+        }
+
+        # Send JSON document and get result
+        try:
+            result = requests.post('{0}/history/delete'.format(self.pod), headers=headers, data=document)
+            if result.status_code == 404:
+                raise ValueError("Message introuvable")
+        except Exception as e:
+            sys.stderr.write("Impossible de supprimer le message:\n" + str(e) + "\n")
+            sys.exit(1)
+        else:
+            print(colored("Message supprimé avec succès !", "green"))
+            return result
+
+    def delete(self, idMsg):
+        finalDoc = self.configDoc(idMsg)
+        self.sendDocument(finalDoc)
 
