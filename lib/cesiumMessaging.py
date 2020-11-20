@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, requests, json, base58, base64, time, string, random
+import os, sys, ast, requests, json, base58, base64, time, string, random
 from natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
 from hashlib import sha256
 from datetime import datetime
@@ -103,12 +103,7 @@ class ReadFromCesium:
 
 
 
-
-
-#############################################
-
-
-
+#################### Sending class ####################
 
 
 
@@ -131,25 +126,20 @@ class SendToCesium:
         nonce=[]
         for i in range(32):
             nonce.append(random.choice(string.ascii_letters + string.digits))
-        self.nonce = ''.join(nonce)
+        self.nonce = base64.b64decode(''.join(nonce))
 
 
     def encryptMsg(self, msg):
-        # nonce = base58.b58decode(nonce)
-        # self.title = base64.b64decode(msgSrc["title"])
-        # self.title = box_decrypt(self.title, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
-        print(self.nonce)
-        nonce = base58.b58decode(self.nonce)
-        return box_encrypt(msg.encode(), get_privkey(self.dunikey, "pubsec"), self.issuer, nonce)
-
-
+        return fmt["64"](box_encrypt(msg.encode(), get_privkey(self.dunikey, "pubsec"), self.issuer, self.nonce)).decode()
 
     def configDoc(self, title, msg):
+        b58nonce = base58.b58encode(self.nonce).decode()
+
         # Get current timestamp
         timeSent = int(time.time())
 
         # Generate document to customize
-        document = str({"issuer":self.issuer,"recipient":self.recipient,"title":title,"content":msg,"time":timeSent,"nonce":self.nonce,"version":2})
+        document = str({"issuer":self.issuer,"recipient":self.recipient,"title":title,"content":msg,"time":timeSent,"nonce":b58nonce,"version":2}).replace("'",'"')
 
         # Generate hash of document
         hashDoc = sha256(document.encode()).hexdigest().upper()
@@ -181,7 +171,7 @@ class SendToCesium:
             sys.stderr.write("Impossible d'envyer le message:\n" + str(e))
             sys.exit(1)
         else:
-            print(result)
+            print(result.text)
             return result
 
 
