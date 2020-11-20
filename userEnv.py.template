@@ -1,3 +1,4 @@
-dunikey = ""			                        # Chemin de la clé privé Ḡ1 de l'émetteur, au format PubSec
-pod = "https://g1.data.duniter.fr"              # Adresse du pod Cesium ou Gchange à utiliser
-#pod = "https://data.gchange.fr"
+dunikey = ""								# Chemin de la clé privé Ḡ1 de l'émetteur, au format PubSec
+#pod = "https://g1.data.duniter.fr"			# Adresse du pod Cesium à utiliser
+pod = "https://g1.data.le-sou.org"			# Adresse du pod Cesium de secours
+#pod = "https://data.gchange.fr"			# Adresse du pod GChange à utiliser

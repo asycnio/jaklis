@@ -1,53 +1,62 @@
 # Utilisation de la messagerie Cesium+/Gchange
 ## Réception/Envoi/Suppression de messages
 
+## Installation
+
+Linux:
+```
+bash setup.sh
+```
+
+Autre:
+```
+Débrouillez-vous.
+```
+
 ## Utilisation
 
-```
-chmod u+x readmsg.sh sendmsg.sh deletemsg.sh
-```
-Par défaut utilise l'émetteur, le fichier de trousseau ainsi que le noeud Cesium+ indiqué dans le fichier `.env`.
-Si non renseigné ni dans le fichier `.env` ni en argument de la commande, alors ils seront demandés interactivement.
+Renseignez le fichier userEnv.py (Généré lors de la première tentative d'execution, ou à copier depuis userEnv.py.template).
 
 ### Lecture des messages
 ```
-./readmsg.sh
+./dialog.py read
 ```
 
 _Options_:
 ```
-    -r,--recipient <pubkey>	Uses <pubkey> as recipient of the messages.
-    -k,--key <key>		Path <key> to the pubsec keychain file of the issuer.
-    -n,--number <number>	Display the <number> lasts messages from Cesium (tail-like format)
-    -o,--outbox			Read outbox messages instead of inbox
-    -h,--help			Display this help
+-h, --help            show this help message and exit
+-n NUMBER, --number NUMBER
+                    Affiche les NUMBER derniers messages
+-o, --outbox          Lit les messages envoyés
 ```
 
 ### Envoi de messages
 ```
-./sendmsg.sh
+./dialog.py send -d DESTINATAIRE
 ```
 
 _Options_:
 ```
-    -t				Test mode: Uses the "test.txt" file as well as the same recipient as the sender.
-    -f,--file <file>		Read the file <file> with title in first line and content in rest of the file for the message.
-    -r,--recipient <pubkey>	Uses <pubkey> as recipient of the message.
-    -i,--issuer <pubkey>	Uses <pubkey> as issuer of the message (Could be remove in future version by calculating pubkey from privatekey).
-    -k,--key <key>		Path <key> to the pubsec keychain file of the issuer.
-    -h,--help			Display this help
+-h, --help            show this help message and exit
+-d DESTINATAIRE, --destinataire DESTINATAIRE
+                    Destinataire du message
+-t TITRE, --titre TITRE
+                    Titre du message à envoyer
+-m MESSAGE, --message MESSAGE
+                    Message à envoyer
+-f FICHIER, --fichier FICHIER
+                    Envoyer le message contenu dans le fichier 'FICHIER'
+-o, --outbox          Envoi le message sur la boite d'envoi
 ```
 
 ### Suppression de messages
 ```
-./deletemsg.sh
+./dialog.py delete -i ID
 ```
 
 _Options_:
 ```
-    -id,--id <ID du message>	Delete the message with ID <id>.
-    -i,--issuer <pubkey>	Uses <pubkey> as issuer of the message.
-    -k,--key <key>		Path <key> to the pubsec keychain file of the issuer.
-    -o,--outbox			Delete outbox messages instead of inbox
-    -h,--help			Display this help
+-h, --help      show this help message and exit
+-i ID, --id ID  ID du message à supprimer
+-o, --outbox    Suppression d'un message envoyé
 ```
