@@ -15,7 +15,7 @@ Débrouillez-vous.
 
 ## Utilisation
 
-Renseignez le fichier userEnv.py (Généré lors de la première tentative d'execution, ou à copier depuis userEnv.py.template).
+Renseignez le fichier **.env** (Généré lors de la première tentative d'execution, ou à copier depuis .env.template).
 
 ### Lecture des messages
 ```
