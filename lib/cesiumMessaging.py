@@ -6,13 +6,14 @@ from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
 
+PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 
 class ReadFromCesium:
     def __init__(self, dunikey, pod):
         # Get my pubkey from my private key
         try:
             self.dunikey = dunikey
-            if dunikey == "":
+            if not dunikey:
                 raise ValueError("Dunikey is empty")
         except:
             sys.stderr.write("Please fill the path to your private key (PubSec)\n")
@@ -21,7 +22,7 @@ class ReadFromCesium:
         self.recipient = get_privkey(dunikey, "pubsec").pubkey
         self.pod = pod
 
-        if not re.match(r"(?![OIl])[1-9A-Za-z]{42,45}", self.recipient):
+        if not re.match(PUBKEY_REGEX, self.recipient) or len(self.recipient) > 45:
             sys.stderr.write("La clé publique n'est pas au bon format.\n")
             sys.exit(1)
 
@@ -117,6 +118,8 @@ class SendToCesium:
         # Get my pubkey from my private key
         try:
             self.dunikey = dunikey
+            if not dunikey:
+                raise ValueError("Dunikey is empty")
         except:
             sys.stderr.write("Please fill the path to your private key (PubSec)\n")
             sys.exit(1)
@@ -132,7 +135,7 @@ class SendToCesium:
             nonce.append(random.choice(string.ascii_letters + string.digits))
         self.nonce = base64.b64decode(''.join(nonce))
 
-        if not re.match(r"(?![OIl])[1-9A-Za-z]{42,45}", recipient):
+        if not re.match(PUBKEY_REGEX, recipient) or len(recipient) > 45:
             sys.stderr.write("La clé publique n'est pas au bon format.\n")
             sys.exit(1)
 
@@ -200,6 +203,8 @@ class DeleteFromCesium:
         # Get my pubkey from my private key
         try:
             self.dunikey = dunikey
+            if not dunikey:
+                raise ValueError("Dunikey is empty")
         except:
             sys.stderr.write("Please fill the path to your private key (PubSec)\n")
             sys.exit(1)

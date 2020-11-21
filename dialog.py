@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 
-import argparse, os, sys
+import argparse, sys, os
+from os.path import join, dirname
 from shutil import copyfile
-if not os.path.isfile("userEnv.py"):
-  copyfile("userEnv.py.template", "userEnv.py")
-try:
-    from userEnv import dunikey, pod
-    if dunikey == "":
-        raise ValueError("Dunikey is empty")
-except:
-    sys.stderr.write("Please fill the path to your private key (PubSec), and a Cesium ES address in userEnv.py\n")
-    sys.exit(1)
+from dotenv import load_dotenv
 from lib.cesiumMessaging import ReadFromCesium, SendToCesium, DeleteFromCesium
+
+# Get varriables environment
+if not os.path.isfile('.env'):
+    copyfile(".env.template", ".env")
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
+dunikey = os.getenv('DUNIKEY')
+pod = os.getenv('POD')
+if not dunikey or not pod:
+    sys.stderr.write("Please fill the path of your private key (PubSec), and a Cesium ES address in .env file\n")
+    sys.exit(1)
+
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -22,9 +28,9 @@ send_cmd = subparsers.add_parser('send', help="Envoi d'un message")
 delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
 
 if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete'):
-  sys.stderr.write("Veuillez indiquer une commande valide:\n\n")
-  parser.print_help()
-  sys.exit(1)
+    sys.stderr.write("Veuillez indiquer une commande valide:\n\n")
+    parser.print_help()
+    sys.exit(1)
 
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
 read_cmd.add_argument('-o', '--outbox', action='store_true', help="Lit les messages envoyés")
@@ -43,23 +49,23 @@ args = parser.parse_args()
 
 # Build cesiumMessaging class
 if sys.argv[1] == "read":
-  messages = ReadFromCesium(dunikey, pod)
-  messages.read(args.number, args.outbox)
+    messages = ReadFromCesium(dunikey, pod)
+    messages.read(args.number, args.outbox)
 elif sys.argv[1] == "send":
-  if args.fichier:
-    with open(args.fichier, 'r') as f:
-      titre = f.readline()
-      msg = ''.join(f.read().splitlines(True)[0:])
-  elif args.titre and args.message:
-    titre = args.titre
-    msg = args.message
-  else:
-    titre = input("Indiquez le titre du message: ")
-    msg = input("Indiquez le contenu du message: ")
-  messages = SendToCesium(dunikey, pod, args.destinataire, args.outbox)
-  messages.send(titre, msg)
+    if args.fichier:
+        with open(args.fichier, 'r') as f:
+            titre = f.readline()
+            msg = ''.join(f.read().splitlines(True)[0:])
+    elif args.titre and args.message:
+        titre = args.titre
+        msg = args.message
+    else:
+        titre = input("Indiquez le titre du message: ")
+        msg = input("Indiquez le contenu du message: ")
+    messages = SendToCesium(dunikey, pod, args.destinataire, args.outbox)
+    messages.send(titre, msg)
 
 elif sys.argv[1] == "delete":
-  messages = DeleteFromCesium(dunikey, pod, args.outbox)
-  messages.delete(args.id)
+    messages = DeleteFromCesium(dunikey, pod, args.outbox)
+    messages.delete(args.id)
 
