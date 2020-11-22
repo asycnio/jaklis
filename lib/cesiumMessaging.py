@@ -6,7 +6,15 @@ from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
 
+VERSION = "0.1-dev"
 PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
+
+def pp_json(json_thing, sort=True, indents=4):
+    if type(json_thing) is str:
+        print(json.dumps(json.loads(json_thing), sort_keys=sort, indent=indents))
+    else:
+        print(json.dumps(json_thing, sort_keys=sort, indent=indents))
+    return None
 
 class ReadFromCesium:
     def __init__(self, dunikey, pod):
@@ -69,41 +77,63 @@ class ReadFromCesium:
         }
 
         # Send JSON document and get JSON result
-        result = requests.post('{0}/message/{1}/_search'.format(self.pod, boxType), headers=headers, data=document).json()["hits"]
-        return result
+        result = requests.post('{0}/message/{1}/_search'.format(self.pod, boxType), headers=headers, data=document)
+        if result.status_code == 200:
+            return result.json()["hits"]
+        else:
+            sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + result.text)
 
     # Parse JSON result and display messages
-    def readMessages(self, msgJSON, nbrMsg):
+    def readMessages(self, msgJSON, nbrMsg, outbox):
+        def decrypt(msg):
+            msg64 = base64.b64decode(msg)
+            return box_decrypt(msg64, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
+
         # Get terminal size
         rows = int(os.popen('stty size', 'r').read().split()[1])
 
-        self.total = msgJSON["total"]
-        infoTotal = "  Nombre de messages: " + str(nbrMsg) + "/" + str(self.total) + "  "
-        print(colored(infoTotal.center(rows, '#'), "yellow"))
-        for hits in msgJSON["hits"]:
-            self.idMsg = hits["_id"]
-            msgSrc = hits["_source"]
-            self.issuer = msgSrc["issuer"]
-            nonce = msgSrc["nonce"]
-            nonce = base58.b58decode(nonce)
-            self.title = base64.b64decode(msgSrc["title"])
-            self.title = box_decrypt(self.title, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
-            self.content = base64.b64decode(msgSrc["content"])
-            self.content = box_decrypt(self.content, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
-            self.dateS = msgSrc["time"]
-            date = datetime.fromtimestamp(self.dateS).strftime(", le %d/%m/%Y à %H:%M  ")
-            headerMsg = "  De " + self.issuer + date + "(ID: {})".format(self.idMsg) + "  "
+        totalMsg = msgJSON["total"]
+        if nbrMsg > totalMsg:
+            nbrMsg = totalMsg
 
-            print('-'.center(rows, '-'))
-            print(colored(headerMsg, "blue").center(rows+9, '-'))
-            print('-'.center(rows, '-'))
-            print("Objet: " + self.title)
-            print(self.content)
+        if totalMsg == 0:
+            print(colored("Aucun message à afficher.", 'yellow'))
+            return True
+        else:
+            infoTotal = "  Nombre de messages: " + str(nbrMsg) + "/" + str(totalMsg) + "  "
+            print(colored(infoTotal.center(rows, '#'), "yellow"))
+            for hits in msgJSON["hits"]:
+                self.idMsg = hits["_id"]
+                msgSrc = hits["_source"]
+                self.issuer = msgSrc["issuer"]
+                nonce = msgSrc["nonce"]
+                nonce = base58.b58decode(nonce)
+                self.dateS = msgSrc["time"]
+                date = datetime.fromtimestamp(self.dateS).strftime(", le %d/%m/%Y à %H:%M  ")
+                if outbox:
+                    startHeader = "  À " + msgSrc["recipient"]
+                else:
+                    startHeader = "  De " + self.issuer
+                headerMsg = startHeader + date + "(ID: {})".format(self.idMsg) + "  "
+
+                print('-'.center(rows, '-'))
+                print(colored(headerMsg, "blue").center(rows+9, '-'))
+                print('-'.center(rows, '-'))
+                try:
+                    self.title = decrypt(msgSrc["title"])
+                    self.content = decrypt(msgSrc["content"])
+                except Exception as e:
+                    sys.stderr.write(colored(str(e), 'red') + '\n')
+                    pp_json(hits)
+                    continue
+                print("Objet: " + self.title)
+                print(self.content)
+                # pp_json(hits)
 
 
     def read(self, nbrMsg, outbox):
         jsonMsg = self.sendDocument(nbrMsg, outbox)
-        self.readMessages(jsonMsg, nbrMsg)
+        self.readMessages(jsonMsg, nbrMsg, outbox)
 
 
 
@@ -181,10 +211,12 @@ class SendToCesium:
             sys.stderr.write("Impossible d'envoyer le message:\n" + str(e))
             sys.exit(1)
         else:
-            print(colored("Message envoyé avec succès !", "green"))
-            print("ID: " + result.text)
-            return result
-
+            if result.status_code == 200:
+                print(colored("Message envoyé avec succès !", "green"))
+                print("ID: " + result.text)
+                return result
+            else:
+                sys.stderr.write("Erreur inconnue.")
 
     def send(self, title, msg):
         finalDoc = self.configDoc(self.encryptMsg(title), self.encryptMsg(msg))     # Configure JSON document to send
@@ -239,7 +271,7 @@ class DeleteFromCesium:
 
         return finalDoc
 
-    def sendDocument(self, document):
+    def sendDocument(self, document, idMsg):
         headers = {
             'Content-type': 'application/json',
         }
@@ -249,14 +281,20 @@ class DeleteFromCesium:
             result = requests.post('{0}/history/delete'.format(self.pod), headers=headers, data=document)
             if result.status_code == 404:
                 raise ValueError("Message introuvable")
+            elif result.status_code == 403:
+                raise ValueError("Vous n'êtes pas l'auteur de ce message.")
         except Exception as e:
-            sys.stderr.write("Impossible de supprimer le message:\n" + str(e) + "\n")
-            sys.exit(1)
+            sys.stderr.write(colored("Impossible de supprimer le message {0}:\n".format(idMsg), 'red') + str(e) + "\n")
+            return False
         else:
-            print(colored("Message supprimé avec succès !", "green"))
-            return result
+            if result.status_code == 200:
+                print(colored("Message {0} supprimé avec succès !".format(idMsg), "green"))
+                return result
+            else:
+                sys.stderr.write("Erreur inconnue.")
 
-    def delete(self, idMsg):
-        finalDoc = self.configDoc(idMsg)
-        self.sendDocument(finalDoc)
+    def delete(self, idsMsgList):
+        for idMsg in idsMsgList:
+            finalDoc = self.configDoc(idMsg)
+            self.sendDocument(finalDoc, idMsg)
 

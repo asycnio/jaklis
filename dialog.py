@@ -4,7 +4,7 @@ import argparse, sys, os
 from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
-from lib.cesiumMessaging import ReadFromCesium, SendToCesium, DeleteFromCesium
+from lib.cesiumMessaging import ReadFromCesium, SendToCesium, DeleteFromCesium, VERSION
 
 # Get varriables environment
 if not os.path.isfile('.env'):
@@ -21,13 +21,14 @@ if not dunikey or not pod:
 
 # Parse arguments
 parser = argparse.ArgumentParser()
+parser.add_argument('-v', '--version', action='store_true', help="Affiche la version actuelle du programme")
 
 subparsers = parser.add_subparsers()
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
 send_cmd = subparsers.add_parser('send', help="Envoi d'un message")
 delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
 
-if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete'):
+if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete','-v','--version'):
     sys.stderr.write("Veuillez indiquer une commande valide:\n\n")
     parser.print_help()
     sys.exit(1)
@@ -41,11 +42,14 @@ send_cmd.add_argument('-m', '--message', help="Message à envoyer")
 send_cmd.add_argument('-f', '--fichier', help="Envoyer le message contenu dans le fichier 'FICHIER'")
 send_cmd.add_argument('-o', '--outbox', action='store_true', help="Envoi le message sur la boite d'envoi")
 
-delete_cmd.add_argument('-i', '--id', required=True, help="ID du message à supprimer")
+delete_cmd.add_argument('-i', '--id', action='append', nargs='+', required=True, help="ID(s) du/des message(s) à supprimer")
 delete_cmd.add_argument('-o', '--outbox', action='store_true', help="Suppression d'un message envoyé")
 
-
 args = parser.parse_args()
+
+if args.version:
+  print(VERSION)
+  sys.exit(0)
 
 # Build cesiumMessaging class
 if sys.argv[1] == "read":
@@ -62,10 +66,11 @@ elif sys.argv[1] == "send":
     else:
         titre = input("Indiquez le titre du message: ")
         msg = input("Indiquez le contenu du message: ")
+
     messages = SendToCesium(dunikey, pod, args.destinataire, args.outbox)
     messages.send(titre, msg)
 
 elif sys.argv[1] == "delete":
     messages = DeleteFromCesium(dunikey, pod, args.outbox)
-    messages.delete(args.id)
+    messages.delete(args.id[0])
 
