@@ -41,29 +41,19 @@ class ReadFromCesium:
         else:
             boxType = "recipient"
 
-        return {
-        "sort": { "time": "desc" },
-        "from": 0,
-        "size": nbrMsg,
-        "_source":[
-            "issuer",
-            "recipient",
-            "title",
-            "content",
-            "time",
-            "nonce",
-            "read_signature"
-        ],"query":{
-            "bool":{
-                "filter":{
-                    "term":{
-                        boxType: self.recipient
-                    }
-                }
-            }
-            }
-        }
+        data = {}
+        data['sort'] = { "time": "desc" }
+        data['from'] = 0
+        data['size'] = nbrMsg
+        data['_source'] = ['issuer','recipient','title','content','time','nonce','read_signature']
+        data['query'] = {}
+        data['query']['bool'] = {}
+        data['query']['bool']['filter'] = {}
+        data['query']['bool']['filter']['term'] = {}
+        data['query']['bool']['filter']['term'][boxType] = self.recipient
 
+        document = json.dumps(data)
+        return document
 
     def sendDocument(self, nbrMsg, outbox):
         if outbox:
@@ -71,7 +61,7 @@ class ReadFromCesium:
         else:
             boxType = "inbox"
 
-        document = json.dumps(self.configDoc(nbrMsg, outbox))
+        document = self.configDoc(nbrMsg, outbox)
         headers = {
             'Content-type': 'application/json',
         }
@@ -179,8 +169,16 @@ class SendToCesium:
         # Get current timestamp
         timeSent = int(time.time())
 
-        # Generate document to customize
-        document = str({"issuer":self.issuer,"recipient":self.recipient,"title":title,"content":msg,"time":timeSent,"nonce":b58nonce,"version":2}).replace("'",'"')
+        # Generate custom JSON
+        data = {}
+        data['issuer'] = self.issuer
+        data['recipient'] = self.recipient
+        data['title'] = title
+        data['content'] = msg
+        data['time'] = timeSent
+        data['nonce'] = b58nonce
+        data['version'] = 2
+        document = json.dumps(data)
 
         # Generate hash of document
         hashDoc = sha256(document.encode()).hexdigest().upper()
@@ -216,7 +214,8 @@ class SendToCesium:
                 print("ID: " + result.text)
                 return result
             else:
-                sys.stderr.write("Erreur inconnue.")
+                sys.stderr.write("Erreur inconnue:" + '\n')
+                print(str(pp_json(result.text)) + '\n')
 
     def send(self, title, msg):
         finalDoc = self.configDoc(self.encryptMsg(title), self.encryptMsg(msg))     # Configure JSON document to send
@@ -257,8 +256,15 @@ class DeleteFromCesium:
         else:
             boxType = "inbox"
 
-        document = str({"version":2,"index":"message","type":boxType,"id":idMsg,"issuer":self.issuer,"time":timeSent}).replace("'",'"')
-        # "{\"version\":2,\"index\":\"message\",\"type\":\"$type\",\"id\":\"$id\",\"issuer\":\"$issuer\",\"time\":$times}"
+        #document = str({"version":2,"index":"message","type":boxType,"id":idMsg,"issuer":self.issuer,"time":timeSent}).replace("'",'"')
+        data = {}
+        data['version'] = 2
+        data['index'] = "message"
+        data['type'] = boxType
+        data['id'] = idMsg
+        data['issuer'] = self.issuer
+        data['time'] = timeSent
+        document = json.dumps(data)
 
         # Generate hash of document
         hashDoc = sha256(document.encode()).hexdigest().upper()
@@ -267,7 +273,12 @@ class DeleteFromCesium:
         signature = fmt["64"](sign(hashDoc.encode(), get_privkey(self.dunikey, "pubsec"))[:-len(hashDoc.encode())]).decode()
 
         # Build final document
-        finalDoc = '{' + '"hash":"{0}","signature":"{1}",'.format(hashDoc, signature) + document[1:]
+        data = {}
+        data['hash'] = hashDoc
+        data['signature'] = signature
+        signJSON = json.dumps(data)
+        finalJSON = {**json.loads(signJSON), **json.loads(document)}
+        finalDoc = json.dumps(finalJSON)
 
         return finalDoc
 
