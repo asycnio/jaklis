@@ -6,7 +6,7 @@ from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
 
-VERSION = "0.1-dev"
+VERSION = "0.1"
 PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 
 def pp_json(json_thing, sort=True, indents=4):
