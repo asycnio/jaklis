@@ -171,7 +171,7 @@ class SendToCesium:
 
 
     def encryptMsg(self, msg):
-        return fmt["64"](box_encrypt(msg.encode(), get_privkey(self.dunikey, "pubsec"), self.issuer, self.nonce)).decode()
+        return fmt["64"](box_encrypt(msg.encode(), get_privkey(self.dunikey, "pubsec"), self.recipient, self.nonce)).decode()
 
     def configDoc(self, title, msg):
         b58nonce = base58.b58encode(self.nonce).decode()
