@@ -37,10 +37,7 @@ class ReadFromCesium:
 
     # Configure JSON document to send
     def configDoc(self, nbrMsg, outbox):
-        if outbox:
-            boxType = "issuer"
-        else:
-            boxType = "recipient"
+        boxType = "issuer" if outbox else "recipient"
 
         data = {}
         data['sort'] = { "time": "desc" }
@@ -57,10 +54,7 @@ class ReadFromCesium:
         return document
 
     def sendDocument(self, nbrMsg, outbox):
-        if outbox:
-            boxType = "outbox"
-        else:
-            boxType = "inbox"
+        boxType = "outbox" if outbox else "inbox"
 
         document = self.configDoc(nbrMsg, outbox)
         headers = {
@@ -194,10 +188,7 @@ class SendToCesium:
 
 
     def sendDocument(self, document):
-        if self.outbox:
-            boxType = "outbox"
-        else:
-            boxType = "inbox"
+        boxType = "outbox" if self.outbox else "inbox"
 
         headers = {
             'Content-type': 'application/json',
@@ -250,14 +241,9 @@ class DeleteFromCesium:
         # Get current timestamp
         timeSent = int(time.time())
 
+        boxType = "outbox" if self.outbox else "inbox"
+
         # Generate document to customize
-
-        if self.outbox:
-            boxType = "outbox"
-        else:
-            boxType = "inbox"
-
-        #document = str({"version":2,"index":"message","type":boxType,"id":idMsg,"issuer":self.issuer,"time":timeSent}).replace("'",'"')
         data = {}
         data['version'] = 2
         data['index'] = "message"
