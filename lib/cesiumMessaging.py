@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 import os, sys, ast, requests, json, base58, base64, time, string, random, re
-from natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
+from lib.natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
 from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
 
-VERSION = "0.1"
+VERSION = "0.1.1"
 PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 
 def pp_json(json_thing, sort=True, indents=4):
+    # Print beautifull JSON
     if type(json_thing) is str:
         print(json.dumps(json.loads(json_thing), sort_keys=sort, indent=indents))
     else:

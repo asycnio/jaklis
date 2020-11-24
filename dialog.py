@@ -6,7 +6,7 @@ from shutil import copyfile
 from dotenv import load_dotenv
 from lib.cesiumMessaging import ReadFromCesium, SendToCesium, DeleteFromCesium, VERSION
 
-# Get varriables environment
+# Get variables environment
 if not os.path.isfile('.env'):
     copyfile(".env.template", ".env")
 dotenv_path = join(dirname(__file__), '.env')
