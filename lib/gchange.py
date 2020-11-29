@@ -51,12 +51,7 @@ class ReadLikes:
             }
         }
 
-        document = json.dumps(data)
-
-        # print(document)
-        # sys.exit(0)
-
-        return document
+        return json.dumps(data)
 
     def sendDocument(self, document):
 
@@ -77,7 +72,10 @@ class ReadLikes:
         result = json.loads(result)
         totalLikes = result['hits']['total']
         totalValue = result['aggregations']['level_sum']['value']
-        score = totalValue/totalLikes
+        if totalLikes:
+            score = totalValue/totalLikes
+        else:
+            score = 0
         raw = result['hits']['hits']
         finalPrint = {}
         finalPrint['likes'] = []
