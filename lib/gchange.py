@@ -28,7 +28,6 @@ class ReadLikes:
 
     # Configure JSON document to send
     def configDoc(self, profile):
-        timeSent = int(time.time())
         if not profile: profile = self.issuer
 
         data = {}
@@ -41,7 +40,7 @@ class ReadLikes:
             {'term': {'kind': 'STAR'}}
         ]
         data['query']['bool']['should'] = {'term':{'issuer': self.issuer}}
-        data['size'] = 1
+        data['size'] = 5000
         data['_source'] = ['issuer','level']
         data['aggs'] = {
             'level_sum': {
@@ -75,21 +74,36 @@ class ReadLikes:
 
     def parseResult(self, result):
         result = json.loads(result)
+        totalLikes = result['hits']['total']
+        totalValue = result['aggregations']['level_sum']['value']
+        score = totalValue/totalLikes
         raw = result['hits']['hits']
+        finalPrint = {}
+        finalPrint['likes'] = []
         for i in raw:
+            issuer = i['_source']['issuer']
             id = i['_id']
             level = i['_source']['level']
-            print('ID:', id,'\nLevel:', level)
+            if issuer == self.issuer:
+                finalPrint['yours'] = { 'id' : id, 'level' : level }
+            else:
+                finalPrint['likes'].append({ 'issuer' : issuer, 'level' : level })
+        finalPrint['score'] = score
+
+        return json.dumps(finalPrint)
 
     def readLikes(self, profile=False):
         document = self.configDoc(profile)
         result = self.sendDocument(document)
-        self.parseResult(result)
+        result = self.parseResult(result)
+
+        print(result)
+        return result
 
 
 
 
-#################### Sending class ####################
+#################### Like class ####################
 
 
 
@@ -167,12 +181,12 @@ class SendLikes:
 
 
 
-#################### Sending class ####################
+#################### Unlike class ####################
 
 
 
 
-class DeleteLikes:
+class UnLikes:
     def __init__(self, dunikey, pod):
         # Get my pubkey from my private key
         try:
@@ -189,6 +203,22 @@ class DeleteLikes:
         if not re.match(PUBKEY_REGEX, self.issuer) or len(self.issuer) > 45:
             sys.stderr.write("La clé publique n'est pas au bon format.\n")
             sys.exit(1)
+    
+    # Check if you liked this profile
+    def checkLike(self, pubkey):
+
+        readProfileLikes = ReadLikes(self.dunikey, self.pod)
+        document = readProfileLikes.configDoc(pubkey)
+        result = readProfileLikes.sendDocument(document)
+        result = readProfileLikes.parseResult(result)
+        result = json.loads(result)
+
+        if 'yours' in result:
+            myLike = result['yours']['id']
+            return myLike
+        else:
+            sys.stderr.write("Vous n'avez pas liké ce profile\n")
+            return False
 
     # Configure JSON document to send
     def configDoc(self, idLike):
@@ -236,7 +266,9 @@ class DeleteLikes:
             sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + result.text + '\n')
 
 
-    def deleteLike(self, idLike):
-        document = self.configDoc(idLike)
-        self.sendDocument(document)
+    def unLike(self, pubkey):
+        idLike = self.checkLike(pubkey)
+        if idLike:
+            document = self.configDoc(idLike)
+            self.sendDocument(document)
 

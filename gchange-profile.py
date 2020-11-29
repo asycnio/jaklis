@@ -4,7 +4,7 @@ import argparse, sys, os
 from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
-from lib.gchange import ReadLikes, SendLikes, DeleteLikes
+from lib.gchange import ReadLikes, SendLikes, UnLikes
 
 # Get variables environment
 if not os.path.isfile('.env'):
@@ -23,32 +23,33 @@ if not dunikey or not pod:
 parser = argparse.ArgumentParser()
 
 subparsers = parser.add_subparsers()
-readLike_cmd = subparsers.add_parser('readlike', help="Lire les likes d'un profile")
-like_cmd = subparsers.add_parser('like', help="Liker un profile")
-deleteLike_cmd = subparsers.add_parser('deletelike', help="Supprimer un like")
+# readLike_cmd = subparsers.add_parser('readlike', help="Lire les likes d'un profile")
+like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE")
+unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
 
-if len(sys.argv) <= 1 or not sys.argv[1] in ('readlike','like','deletelike'):
+if len(sys.argv) <= 1 or not sys.argv[1] in ('like','unlike'):
     sys.stderr.write("Veuillez indiquer une commande valide:\n\n")
     parser.print_help()
     sys.exit(1)
 
-readLike_cmd.add_argument('-p', '--profile', help="Profile cible")
+# readLike_cmd.add_argument('-p', '--profile', help="Profile cible")
 
 like_cmd.add_argument('-p', '--profile', help="Profile cible")
 like_cmd.add_argument('-s', '--stars', type=int, help="Nombre d'étoile")
 
-deleteLike_cmd.add_argument('-i', '--id', help="ID du like à supprimer")
+unlike_cmd.add_argument('-p', '--profile', help="Profile à déliker")
 
 args = parser.parse_args()
 
 # Build gchange class
-if sys.argv[1] == "readlike":
-    gchange = ReadLikes(dunikey, pod)
-    gchange.readLikes(args.profile)
-elif sys.argv[1] == "like":
-    gchange = SendLikes(dunikey, pod)
-    gchange.like(args.profile, args.stars)
-elif sys.argv[1] == "deletelike":
-    gchange = DeleteLikes(dunikey, pod)
-    gchange.deleteLike(args.id)
+if sys.argv[1] == "like":
+    if args.stars:
+        gchange = SendLikes(dunikey, pod)
+        gchange.like(args.profile, args.stars)
+    else:
+        gchange = ReadLikes(dunikey, pod)
+        gchange.readLikes(args.profile)
+elif sys.argv[1] == "unlike":
+    gchange = UnLikes(dunikey, pod)
+    gchange.unLike(args.profile)
 
