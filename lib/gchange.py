@@ -127,6 +127,7 @@ class SendLikes:
 
     # Configure JSON document to send
     def configDoc(self, profile, likes):
+        if not profile: profile = self.issuer
         if likes not in range(0, 6):
             sys.stderr.write(colored('Votre like doit être compris entre 0 et 5.\n', 'red'))
             return False
@@ -191,7 +192,7 @@ class SendLikes:
 
 
 
-    def like(self, profile, stars):
+    def like(self, stars, profile=False):
         document = self.configDoc(profile, stars)
         if document:
             self.sendDocument(document, profile)

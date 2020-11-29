@@ -45,7 +45,7 @@ args = parser.parse_args()
 if sys.argv[1] == "like":
     if args.stars or args.stars == 0:
         gchange = SendLikes(dunikey, pod)
-        gchange.like(args.profile, args.stars)
+        gchange.like(args.stars, args.profile)
     else:
         gchange = ReadLikes(dunikey, pod)
         gchange.readLikes(args.profile)
