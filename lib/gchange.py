@@ -2,6 +2,7 @@
 
 import os, sys, ast, requests, json, base58, base64, time, string, random, re
 from lib.natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
+from time import sleep
 from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
@@ -128,6 +129,11 @@ class SendLikes:
 
     # Configure JSON document to send
     def configDoc(self, profile, likes):
+        if likes not in range(0, 6):
+            sys.stderr.write(colored('Votre like doit être compris entre 0 et 5.\n', 'red'))
+            return False
+
+
         timeSent = int(time.time())
 
         data = {}
@@ -158,7 +164,7 @@ class SendLikes:
 
         return finalDoc
 
-    def sendDocument(self, document):
+    def sendDocument(self, document, pubkey):
 
         headers = {
             'Content-type': 'application/json',
@@ -170,13 +176,27 @@ class SendLikes:
         if result.status_code == 200:
             print(colored("Profile liké avec succès !", 'green'))
             return result.text
+        elif result.status_code == 400:
+            resultJson = json.loads(result.text)
+            if 'DuplicatedDocumentException' in resultJson['error']:
+                rmLike = UnLikes(self.dunikey, self.pod)
+                rmLike.unLike(pubkey, True)
+                sleep(0.5)
+                self.sendDocument(document, pubkey)
+                return resultJson['error']
+            else:
+                sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + resultJson['error'] + '\n')
         else:
-            sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + result.text + '\n')
+            resultJson = json.loads(result.text)
+            sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + resultJson['error'] + '\n')
+
+
 
 
     def like(self, profile, stars):
         document = self.configDoc(profile, stars)
-        self.sendDocument(document)
+        if document:
+            self.sendDocument(document, profile)
 
 
 
@@ -250,7 +270,7 @@ class UnLikes:
 
         return finalDoc
 
-    def sendDocument(self, document):
+    def sendDocument(self, document, silent):
 
         headers = {
             'Content-type': 'application/json',
@@ -260,15 +280,16 @@ class UnLikes:
         result = requests.post('{0}/history/delete'.format(self.pod), headers=headers, data=document)
 
         if result.status_code == 200:
-            print(colored("Like supprimé avec succès !", 'green'))
+            if not silent:
+                print(colored("Like supprimé avec succès !", 'green'))
             return result.text
         else:
             sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + result.text + '\n')
 
 
-    def unLike(self, pubkey):
+    def unLike(self, pubkey, silent=False):
         idLike = self.checkLike(pubkey)
         if idLike:
             document = self.configDoc(idLike)
-            self.sendDocument(document)
+            self.sendDocument(document, silent)
 
