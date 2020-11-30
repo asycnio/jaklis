@@ -81,12 +81,16 @@ class ReadLikes:
         finalPrint['likes'] = []
         for i in raw:
             issuer = i['_source']['issuer']
+            gProfile = requests.get('{0}/user/profile/{1}'.format(self.pod, issuer))
+            gProfile = json.loads(gProfile.text)['_source']
+            pseudo = gProfile['title']
+            payTo = gProfile['pubkey']
             id = i['_id']
             level = i['_source']['level']
             if issuer == self.issuer:
                 finalPrint['yours'] = { 'id' : id, 'level' : level }
             else:
-                finalPrint['likes'].append({ 'issuer' : issuer, 'level' : level })
+                finalPrint['likes'].append({ 'issuer' : issuer, 'pseudo' : pseudo, 'payTo' : payTo, 'level' : level })
         finalPrint['score'] = score
 
         return json.dumps(finalPrint)
