@@ -92,7 +92,7 @@ class ReadLikes:
             id = i['_id']
             level = i['_source']['level']
             if issuer == self.issuer:
-                finalPrint['yours'] = { 'id' : id, 'level' : level }
+                finalPrint['yours'] = { 'id' : id, 'pseudo' : pseudo, 'level' : level }
             else:
                 finalPrint['likes'].append({ 'issuer' : issuer, 'pseudo' : pseudo, 'payTo' : payTo, 'level' : level })
         finalPrint['score'] = score
