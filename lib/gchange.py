@@ -30,6 +30,11 @@ class ReadLikes:
     # Configure JSON document to send
     def configDoc(self, profile):
         if not profile: profile = self.issuer
+        # elif len(profile) < 42:
+        #     print(len(profile))
+        #     gProfile = requests.get('{0}/user/profile/{1}'.format(self.pod, issuer))
+        #     gProfile = json.loads(gProfile.text)['_source']
+        #     pseudo = gProfile['title']
 
         data = {}
         data['query'] = {}
@@ -40,7 +45,7 @@ class ReadLikes:
             {'term': {'id': profile}},
             {'term': {'kind': 'STAR'}}
         ]
-        data['query']['bool']['should'] = {'term':{'issuer': self.issuer}}
+        # data['query']['bool']['should'] = {'term':{'issuer': self.issuer}}
         data['size'] = 5000
         data['_source'] = ['issuer','level']
         data['aggs'] = {
@@ -81,8 +86,7 @@ class ReadLikes:
         finalPrint['likes'] = []
         for i in raw:
             issuer = i['_source']['issuer']
-            gProfile = requests.get('{0}/user/profile/{1}'.format(self.pod, issuer))
-            gProfile = json.loads(gProfile.text)['_source']
+            gProfile = self.getProfile(issuer)
             pseudo = gProfile['title']
             payTo = gProfile['pubkey']
             id = i['_id']
@@ -94,6 +98,28 @@ class ReadLikes:
         finalPrint['score'] = score
 
         return json.dumps(finalPrint)
+
+    def getProfile(self, profile):
+        headers = {
+            'Content-type': 'application/json',
+        }
+
+        data = {}
+        data['query'] = {}
+        data['query']['bool'] = {}
+        data['query']['bool']['filter'] = [
+            {'term': {'_index': 'user'}},
+            {'term': {'_type': 'profile'}},
+            {'term': {'_id': profile}}
+        ]
+        data['_source'] = ['title','pubkey']
+
+        data = json.dumps(data)
+
+        result = requests.post('{0}/user/profile/_search'.format(self.pod), headers=headers, data=data)
+        result = json.loads(result.text)['hits']['hits'][0]['_source']
+        
+        return result
 
     def readLikes(self, profile=False):
         document = self.configDoc(profile)
