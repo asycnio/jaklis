@@ -113,7 +113,8 @@ class ReadFromCesium:
                     continue
                 print("Objet: " + self.title)
                 print(self.content)
-                # pp_json(hits)
+                
+            print(colored(infoTotal.center(rows, '#'), "yellow"))
 
 
     def read(self, nbrMsg, outbox):

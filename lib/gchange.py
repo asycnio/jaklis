@@ -118,7 +118,7 @@ class ReadLikes:
 
         result = requests.post('{0}/user/profile/_search'.format(self.pod), headers=headers, data=data)
         result = json.loads(result.text)['hits']['hits'][0]['_source']
-        
+
         return result
 
     def readLikes(self, profile=False):
