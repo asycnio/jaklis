@@ -19,6 +19,12 @@ pod = os.getenv('POD')
 if not dunikey or not pod:
     sys.stderr.write("Please fill the path of your private key (PubSec), and a Cesium ES address in .env file\n")
     sys.exit(1)
+if not os.path.isfile(dunikey):
+    HOME = os.getenv("HOME")
+    dunikey = HOME + os.getenv('DUNIKEY')
+if not os.path.isfile(dunikey):
+    sys.stderr.write("File {0} doesn't exist.\n".format(dunikey))
+    sys.exit(1)
 
 # Parse arguments
 parser = argparse.ArgumentParser()
