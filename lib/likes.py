@@ -88,11 +88,14 @@ class ReadLikes:
             issuer = i['_source']['issuer']
             gProfile = self.getProfile(issuer)
             pseudo = gProfile['title']
-            payTo = gProfile['pubkey']
+            try:
+                payTo = gProfile['pubkey']
+            except:
+                payTo = ''
             id = i['_id']
             level = i['_source']['level']
             if issuer == self.issuer:
-                finalPrint['yours'] = { 'id' : id, 'pseudo' : pseudo, 'level' : level }
+                finalPrint['yours'] = { 'id' : id, 'pseudo' : pseudo, 'payTo' : payTo, 'level' : level }
             else:
                 finalPrint['likes'].append({ 'issuer' : issuer, 'pseudo' : pseudo, 'payTo' : payTo, 'level' : level })
         finalPrint['score'] = score
