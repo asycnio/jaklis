@@ -7,12 +7,13 @@ from dotenv import load_dotenv
 from lib.cesiumMessaging import ReadFromCesium, SendToCesium, DeleteFromCesium, VERSION
 
 # Get variables environment
+HOME = os.getenv("HOME")
 if not os.path.isfile('.env'):
     copyfile(".env.template", ".env")
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-dunikey = os.getenv('DUNIKEY')
+dunikey = HOME + os.getenv('DUNIKEY')
 pod = os.getenv('POD')
 if not dunikey or not pod:
     sys.stderr.write("Please fill the path of your private key (PubSec), and a Cesium ES address in .env file\n")
