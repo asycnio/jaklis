@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from lib.cesium import ReadFromCesium, SendToCesium, DeleteFromCesium, Profiles
 from lib.likes import ReadLikes, SendLikes, UnLikes
 
-VERSION = "0.1.0"
+VERSION = "0.0.1"
 
 # Get variables environment
 if not os.path.isfile('.env'):
