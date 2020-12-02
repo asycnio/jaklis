@@ -422,10 +422,13 @@ class Profiles:
             sys.stderr.write("Echec de l'envoi du document...\n" + result.text + '\n')
 
     def parseJSON(self, doc):
-        doc = json.loads(doc)['hits']['hits'][0] #['_source']
-        pubkey = { "pubkey": doc['_id'] }
-        rest = doc['_source']
-        final = {**pubkey, **rest}
+        doc = json.loads(doc)['hits']['hits']
+        if doc:
+            pubkey = { "pubkey": doc[0]['_id'] }
+            rest = doc[0]['_source']
+            final = {**pubkey, **rest}
+        else:
+            final = 'Profile vide'
 
         return json.dumps(final, indent=2)
 
