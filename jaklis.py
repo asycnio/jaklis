@@ -38,7 +38,7 @@ delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
 getProfile_cmd = subparsers.add_parser('get', help="Voir un profile Cesium+")
 setProfile_cmd = subparsers.add_parser('set', help="Configurer son profile Cesium+")
 eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesium+")
-like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE")
+like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE)")
 unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
 
 if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete','set','get','erase','like','unlike','-v','--version'):
