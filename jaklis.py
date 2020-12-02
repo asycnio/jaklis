@@ -4,9 +4,10 @@ import argparse, sys, os
 from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
-from lib.cesium import ReadFromCesium, SendToCesium, DeleteFromCesium
+from lib.cesium import ReadFromCesium, SendToCesium, DeleteFromCesium, Profiles
+from lib.likes import ReadLikes, SendLikes, UnLikes
 
-VERSION = "0.1.1"
+VERSION = "0.1.0"
 
 # Get variables environment
 if not os.path.isfile('.env'):
@@ -34,12 +35,18 @@ subparsers = parser.add_subparsers()
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
 send_cmd = subparsers.add_parser('send', help="Envoi d'un message")
 delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
+getProfile_cmd = subparsers.add_parser('get', help="Voir un profile Cesium+")
+setProfile_cmd = subparsers.add_parser('set', help="Configurer son profile Cesium+")
+eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesium+")
+like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE")
+unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
 
-if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete','-v','--version'):
+if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete','set','get','erase','like','unlike','-v','--version'):
     sys.stderr.write("Veuillez indiquer une commande valide:\n\n")
     parser.print_help()
     sys.exit(1)
 
+# Messages management
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
 read_cmd.add_argument('-o', '--outbox', action='store_true', help="Lit les messages envoyés")
 
@@ -51,6 +58,21 @@ send_cmd.add_argument('-o', '--outbox', action='store_true', help="Envoi le mess
 
 delete_cmd.add_argument('-i', '--id', action='append', nargs='+', required=True, help="ID(s) du/des message(s) à supprimer")
 delete_cmd.add_argument('-o', '--outbox', action='store_true', help="Suppression d'un message envoyé")
+
+# Profiles management
+setProfile_cmd.add_argument('-n', '--name', help="Nom du profile")
+setProfile_cmd.add_argument('-d', '--description', help="Description du profile")
+setProfile_cmd.add_argument('-v', '--ville', help="Ville du profile")
+setProfile_cmd.add_argument('-a', '--adresse', help="Adresse du profile")
+setProfile_cmd.add_argument('-pos', '--position', nargs=2, help="Points géographiques (lat + lon)")
+setProfile_cmd.add_argument('-s', '--site', help="Site web du profile")
+
+getProfile_cmd.add_argument('-p', '--profile', help="Nom du profile")
+
+# Likes management
+like_cmd.add_argument('-p', '--profile', help="Profile cible")
+like_cmd.add_argument('-s', '--stars', type=int, help="Nombre d'étoile")
+unlike_cmd.add_argument('-p', '--profile', help="Profile à déliker")
 
 args = parser.parse_args()
 
@@ -80,4 +102,26 @@ elif sys.argv[1] == "send":
 elif sys.argv[1] == "delete":
     messages = DeleteFromCesium(dunikey, pod, args.outbox)
     messages.delete(args.id[0])
+
+# Build cesium+ profiles class
+elif sys.argv[1] in ('set','get','erase'):
+    cesium = Profiles(dunikey, pod)
+    if sys.argv[1] == "set":
+        cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site)
+    elif sys.argv[1] == "get":
+        cesium.get(args.profile)
+    elif sys.argv[1] == "erase":
+        cesium.erase()
+
+# Build cesium+ likes class
+elif sys.argv[1] == "like":
+    if args.stars or args.stars == 0:
+        gchange = SendLikes(dunikey, pod)
+        gchange.like(args.stars, args.profile)
+    else:
+        gchange = ReadLikes(dunikey, pod)
+        gchange.readLikes(args.profile)
+elif sys.argv[1] == "unlike":
+    gchange = UnLikes(dunikey, pod)
+    gchange.unLike(args.profile)
 
