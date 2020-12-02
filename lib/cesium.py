@@ -2,11 +2,11 @@
 
 import os, sys, ast, requests, json, base58, base64, time, string, random, re
 from lib.natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
+from time import sleep
 from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
 
-VERSION = "0.1.1"
 PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 
 def pp_json(json_thing, sort=True, indents=4):
@@ -111,7 +111,7 @@ class ReadFromCesium:
                     sys.stderr.write(colored(str(e), 'red') + '\n')
                     pp_json(hits)
                     continue
-                print("Objet: " + self.title)
+                print('\033[1m' + self.title + '\033[0m')
                 print(self.content)
                 
             print(colored(infoTotal.center(rows, '#'), "yellow"))
@@ -297,3 +297,164 @@ class DeleteFromCesium:
             finalDoc = self.configDoc(idMsg)
             self.sendDocument(finalDoc, idMsg)
 
+
+
+
+
+#################### Profile class ####################
+
+
+
+
+
+class Profiles:
+    def __init__(self, dunikey, pod):
+        # Get my pubkey from my private key
+        try:
+            self.dunikey = dunikey
+            if not dunikey:
+                raise ValueError("Dunikey is empty")
+        except:
+            sys.stderr.write("Please fill the path to your private key (PubSec)\n")
+            sys.exit(1)
+
+        self.pubkey = get_privkey(dunikey, "pubsec").pubkey
+        self.pod = pod
+
+        if not re.match(PUBKEY_REGEX, self.pubkey) or len(self.pubkey) > 45:
+            sys.stderr.write("La clé publique n'est pas au bon format.\n")
+            sys.exit(1)
+
+    # Configure JSON document SET to send
+    def configDocSet(self, name, description, city, address, pos, socials):
+        timeSent = int(time.time())
+
+        data = {}
+        if name: data['title'] = name
+        if description: data['description'] = description
+        if address: data['address'] = address
+        if city: data['city'] = city
+        if pos: 
+            geoPoint = {}
+            geoPoint['lat'] = pos[0]
+            geoPoint['lon'] = pos[1]
+            data['geoPoint'] = geoPoint
+        if socials:
+            data['socials'] = []
+            data['socials'].append({})
+            data['socials'][0]['type'] = "web"
+            data['socials'][0]['url'] = socials
+        data['time'] = timeSent
+        data['issuer'] = self.pubkey
+        data['version'] = 2
+        data['tags'] = []
+
+        document =  json.dumps(data)
+
+        # Generate hash of document
+        hashDoc = sha256(document.encode()).hexdigest().upper()
+
+        # Generate signature of document
+        signature = fmt["64"](sign(hashDoc.encode(), get_privkey(self.dunikey, "pubsec"))[:-len(hashDoc.encode())]).decode()
+
+        # Build final document
+        data = {}
+        data['hash'] = hashDoc
+        data['signature'] = signature
+        signJSON = json.dumps(data)
+        finalJSON = {**json.loads(signJSON), **json.loads(document)}
+        finalDoc = json.dumps(finalJSON)
+
+        return finalDoc
+
+   # Configure JSON document GET to send
+    def configDocGet(self, profile, scope='title'):
+
+        data = {
+                "query": {
+                "bool": {
+                    "should":[
+                        {
+                            "match":{
+                                scope:{
+                                    "query": profile,"boost":2
+                                }
+                            }
+                        },{
+                            "prefix": {scope: profile}
+                        }
+                    ]
+                }
+            },"highlight": {
+                    "fields": {
+                        "title":{},
+                        "tags":{}
+                    }
+                },"from":0,
+                "size":100,
+                "_source":["title","avatar._content_type","description","city","address","socials.url","creationTime","membersCount","type"],
+                "indices_boost":{"user":100,"page":1,"group":0.01
+                }
+        }
+
+        document =  json.dumps(data)
+
+        return document
+
+
+    def sendDocument(self, document, type):
+
+        headers = {
+            'Content-type': 'application/json',
+        }
+
+        # Send JSON document and get JSON result
+        if type == 'set':
+            reqQuery = '{0}/user/profile?pubkey={1}/_update?pubkey={1}'.format(self.pod, self.pubkey)
+        elif type == 'get':
+            reqQuery = '{0}/user,page,group/profile,record/_search'.format(self.pod)
+
+        result = requests.post(reqQuery, headers=headers, data=document)
+        if result.status_code == 200:
+            # print(result.text)
+            return result.text
+        else:
+            sys.stderr.write("Echec de l'envoi du document...\n" + result.text + '\n')
+
+    def parseJSON(self, doc):
+        doc = json.loads(doc)['hits']['hits'][0] #['_source']
+        pubkey = { "pubkey": doc['_id'] }
+        rest = doc['_source']
+        final = {**pubkey, **rest}
+
+        return json.dumps(final, indent=2)
+
+
+    def set(self, name=None, description=None, ville=None, adresse=None, position=None, site=None):
+        document = self.configDocSet(name, description, ville, adresse, position, site)
+        result = self.sendDocument(document,'set')
+
+        print(result)
+        return result
+    
+    def get(self, profile=None):
+        if not profile:
+            profile = self.pubkey
+        if not re.match(PUBKEY_REGEX, profile) or len(profile) > 45:
+            scope = 'title'
+        else:
+            scope = '_id'
+        
+        document = self.configDocGet(profile, scope)
+        resultJSON = self.sendDocument(document, 'get')
+        result = self.parseJSON(resultJSON)
+
+        print(result)
+        return result
+
+    def erase(self):
+        document = self.configDocSet(None, None, None, None, None, None)
+        result = self.sendDocument(document,'set')
+
+        print(result)
+        return result

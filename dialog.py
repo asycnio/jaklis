@@ -4,7 +4,9 @@ import argparse, sys, os
 from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
-from lib.cesiumMessaging import ReadFromCesium, SendToCesium, DeleteFromCesium, VERSION
+from lib.cesium import ReadFromCesium, SendToCesium, DeleteFromCesium
+
+VERSION = "0.1.1"
 
 # Get variables environment
 HOME = os.getenv("HOME")
