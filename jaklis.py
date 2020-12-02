@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import argparse, sys, os
+import argparse, sys, os, random, string, getpass
 from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
+from duniterpy.key import SigningKey
 from lib.cesium import ReadFromCesium, SendToCesium, DeleteFromCesium, Profiles
 from lib.likes import ReadLikes, SendLikes, UnLikes
 
@@ -14,18 +15,6 @@ if not os.path.isfile('.env'):
     copyfile(".env.template", ".env")
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
-
-dunikey = os.getenv('DUNIKEY')
-pod = os.getenv('POD')
-if not dunikey or not pod:
-    sys.stderr.write("Please fill the path of your private key (PubSec), and a Cesium ES address in .env file\n")
-    sys.exit(1)
-if not os.path.isfile(dunikey):
-    HOME = os.getenv("HOME")
-    dunikey = HOME + os.getenv('DUNIKEY')
-if not os.path.isfile(dunikey):
-    sys.stderr.write("File {0} doesn't exist.\n".format(dunikey))
-    sys.exit(1)
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -80,6 +69,34 @@ if args.version:
   print(VERSION)
   sys.exit(0)
 
+def createTmpDunikey():
+    # Generate pseudo-random nonce
+    nonce=[]
+    for i in range(32):
+        nonce.append(random.choice(string.ascii_letters + string.digits))
+    nonce = ''.join(nonce)
+    keyPath = "/tmp/secret.dunikey-" + nonce
+
+    key = SigningKey.from_credentials(getpass.getpass("Identifiant: "), getpass.getpass("Mot de passe: "), None)
+    key.save_pubsec_file(keyPath)
+    
+    return keyPath
+
+pod = os.getenv('POD')
+if not pod:
+    pod="https://g1.data.le-sou.org"
+
+dunikey = os.getenv('DUNIKEY')
+if not dunikey:
+    keyPath = createTmpDunikey()
+    dunikey = keyPath
+else:
+    keyPath = False
+if not os.path.isfile(dunikey):
+    HOME = os.getenv("HOME")
+    dunikey = HOME + os.getenv('DUNIKEY')
+
+
 # Build cesiumMessaging class
 if sys.argv[1] == "read":
     messages = ReadFromCesium(dunikey, pod)
@@ -125,3 +142,6 @@ elif sys.argv[1] == "unlike":
     gchange = UnLikes(dunikey, pod)
     gchange.unLike(args.profile)
 
+
+if keyPath:
+    os.remove(keyPath)
