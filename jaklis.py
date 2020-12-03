@@ -37,6 +37,7 @@ if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete','set','get',
 
 # Messages management
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
+read_cmd.add_argument('-j', '--json', action='store_true', help="Sort au format JSON")
 read_cmd.add_argument('-o', '--outbox', action='store_true', help="Lit les messages envoyés")
 
 send_cmd.add_argument('-d', '--destinataire', required=True, help="Destinataire du message")
@@ -100,7 +101,7 @@ if not os.path.isfile(dunikey):
 # Build cesiumMessaging class
 if sys.argv[1] == "read":
     messages = ReadFromCesium(dunikey, pod)
-    messages.read(args.number, args.outbox)
+    messages.read(args.number, args.outbox, args.json)
 elif sys.argv[1] == "send":
     if args.fichier:
         with open(args.fichier, 'r') as f:

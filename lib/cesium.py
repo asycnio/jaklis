@@ -115,11 +115,65 @@ class ReadFromCesium:
                 print(self.content)
                 
             print(colored(infoTotal.center(rows, '#'), "yellow"))
+    
+        # Parse JSON result and display messages
+    def jsonMessages(self, msgJSON, nbrMsg, outbox):
+        def decrypt(msg):
+            msg64 = base64.b64decode(msg)
+            return box_decrypt(msg64, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
+
+        totalMsg = msgJSON["total"]
+        if nbrMsg > totalMsg:
+            nbrMsg = totalMsg
+
+        if totalMsg == 0:
+            print("Aucun message à afficher")
+            return True
+        else:
+            data = []
+            # data.append({})
+            # data[0]['total'] = totalMsg
+            for i, hits in enumerate(msgJSON["hits"]):
+                self.idMsg = hits["_id"]
+                msgSrc = hits["_source"]
+                self.issuer = msgSrc["issuer"]
+                nonce = msgSrc["nonce"]
+                nonce = base58.b58decode(nonce)
+                self.date = msgSrc["time"]
+
+                if outbox:
+                    pubkey = msgSrc["recipient"]
+                else:
+                    pubkey = self.issuer
+
+                try:
+                    self.title = decrypt(msgSrc["title"])
+                    self.content = decrypt(msgSrc["content"])
+                except Exception as e:
+                    sys.stderr.write(colored(str(e), 'red') + '\n')
+                    pp_json(hits)
+                    continue
+
+                data.append(i)
+                data[i] = {}
+                data[i]['id'] = self.idMsg
+                data[i]['date'] = self.date
+                data[i]['pubkey'] = pubkey
+                data[i]['title'] = self.title
+                data[i]['content'] = self.content
+
+            data = json.dumps(data, indent=2)
+            return data
+                
 
 
-    def read(self, nbrMsg, outbox):
+    def read(self, nbrMsg, outbox, isJSON):
         jsonMsg = self.sendDocument(nbrMsg, outbox)
-        self.readMessages(jsonMsg, nbrMsg, outbox)
+        if isJSON:
+            jsonFormat = self.jsonMessages(jsonMsg, nbrMsg, outbox)
+            print(jsonFormat)
+        else:
+            self.readMessages(jsonMsg, nbrMsg, outbox)
 
 
 
