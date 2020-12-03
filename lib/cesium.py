@@ -164,8 +164,6 @@ class ReadFromCesium:
 
             data = json.dumps(data, indent=2)
             return data
-                
-
 
     def read(self, nbrMsg, outbox, isJSON):
         jsonMsg = self.sendDocument(nbrMsg, outbox)
