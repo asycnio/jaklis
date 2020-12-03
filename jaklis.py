@@ -81,7 +81,7 @@ if args.version:
 def createTmpDunikey():
     # Generate pseudo-random nonce
     nonce=[]
-    for i in range(32):
+    for _ in range(32):
         nonce.append(random.choice(string.ascii_letters + string.digits))
     nonce = ''.join(nonce)
     keyPath = "/tmp/secret.dunikey-" + nonce

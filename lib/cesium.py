@@ -199,7 +199,7 @@ class SendToCesium:
 
         # Generate pseudo-random nonce
         nonce=[]
-        for i in range(32):
+        for _ in range(32):
             nonce.append(random.choice(string.ascii_letters + string.digits))
         self.nonce = base64.b64decode(''.join(nonce))
 
