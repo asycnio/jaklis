@@ -9,4 +9,4 @@ for i in gcc python3-pip python3-setuptools libpq-dev python3-dev python3-wheel;
 done
 
 pip3 install -r requirements.txt
-chmod u+x dialog.py
+chmod u+x jaklis.py

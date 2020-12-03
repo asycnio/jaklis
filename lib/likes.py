@@ -86,8 +86,12 @@ class ReadLikes:
         finalPrint['likes'] = []
         for i in raw:
             issuer = i['_source']['issuer']
+            # print(issuer)
             gProfile = self.getProfile(issuer)
-            pseudo = gProfile['title']
+            try:
+                pseudo = gProfile['title']
+            except:
+                pseudo = ''
             try:
                 payTo = gProfile['pubkey']
             except:
