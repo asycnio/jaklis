@@ -56,8 +56,10 @@ setProfile_cmd.add_argument('-v', '--ville', help="Ville du profile")
 setProfile_cmd.add_argument('-a', '--adresse', help="Adresse du profile")
 setProfile_cmd.add_argument('-pos', '--position', nargs=2, help="Points géographiques (lat + lon)")
 setProfile_cmd.add_argument('-s', '--site', help="Site web du profile")
+setProfile_cmd.add_argument('-A', '--avatar', help="Chemin vers mon avatar en PNG")
 
 getProfile_cmd.add_argument('-p', '--profile', help="Nom du profile")
+getProfile_cmd.add_argument('-a', '--avatar', action='store_true', help="Récupérer également l'avatar au format raw base64")
 
 # Likes management
 like_cmd.add_argument('-p', '--profile', help="Profile cible")
@@ -129,9 +131,9 @@ elif sys.argv[1] == "delete":
 elif sys.argv[1] in ('set','get','erase'):
     cesium = Profiles(dunikey, pod)
     if sys.argv[1] == "set":
-        cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site)
+        cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site, args.avatar)
     elif sys.argv[1] == "get":
-        cesium.get(args.profile)
+        cesium.get(args.profile, args.avatar)
     elif sys.argv[1] == "erase":
         cesium.erase()
 

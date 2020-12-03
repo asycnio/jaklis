@@ -6,6 +6,7 @@ from time import sleep
 from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
+from PIL import Image
 
 PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 
@@ -378,7 +379,7 @@ class Profiles:
             sys.exit(1)
 
     # Configure JSON document SET to send
-    def configDocSet(self, name, description, city, address, pos, socials):
+    def configDocSet(self, name, description, city, address, pos, socials, avatar):
         timeSent = int(time.time())
 
         data = {}
@@ -396,6 +397,13 @@ class Profiles:
             data['socials'].append({})
             data['socials'][0]['type'] = "web"
             data['socials'][0]['url'] = socials
+        if avatar:
+            avatar = open(avatar, 'rb').read()
+            avatar = base64.b64encode(avatar).decode()
+            # print(avatar)
+            data['avatar'] = {}
+            data['avatar']['_content'] = avatar
+            data['avatar']['_content_type'] = "image/png"
         data['time'] = timeSent
         data['issuer'] = self.pubkey
         data['version'] = 2
@@ -420,7 +428,12 @@ class Profiles:
         return finalDoc
 
    # Configure JSON document GET to send
-    def configDocGet(self, profile, scope='title'):
+    def configDocGet(self, profile, scope='title', getAvatar=None):
+
+        if getAvatar:
+            avatar = "avatar"
+        else:
+            avatar = "avatar._content_type"
 
         data = {
                 "query": {
@@ -444,7 +457,7 @@ class Profiles:
                     }
                 },"from":0,
                 "size":100,
-                "_source":["title","avatar._content_type","description","city","address","socials.url","creationTime","membersCount","type"],
+                "_source":["title", avatar,"description","city","address","socials.url","creationTime","membersCount","type"],
                 "indices_boost":{"user":100,"page":1,"group":0.01
                 }
         }
@@ -453,6 +466,35 @@ class Profiles:
 
         return document
 
+    # Configure JSON document SET to send
+    def configDocErase(self):
+        timeSent = int(time.time())
+
+        data = {}
+        data['time'] = timeSent
+        data['id'] = self.pubkey
+        data['issuer'] = self.pubkey
+        data['version'] = 2
+        data['index'] = "user"
+        data['type'] = "profile"
+
+        document =  json.dumps(data)
+
+        # Generate hash of document
+        hashDoc = sha256(document.encode()).hexdigest().upper()
+
+        # Generate signature of document
+        signature = fmt["64"](sign(hashDoc.encode(), get_privkey(self.dunikey, "pubsec"))[:-len(hashDoc.encode())]).decode()
+
+        # Build final document
+        data = {}
+        data['hash'] = hashDoc
+        data['signature'] = signature
+        signJSON = json.dumps(data)
+        finalJSON = {**json.loads(signJSON), **json.loads(document)}
+        finalDoc = json.dumps(finalJSON)
+
+        return finalDoc
 
     def sendDocument(self, document, type):
 
@@ -465,6 +507,8 @@ class Profiles:
             reqQuery = '{0}/user/profile?pubkey={1}/_update?pubkey={1}'.format(self.pod, self.pubkey)
         elif type == 'get':
             reqQuery = '{0}/user,page,group/profile,record/_search'.format(self.pod)
+        elif type == 'erase':
+            reqQuery = '{0}/history/delete'.format(self.pod)
 
         result = requests.post(reqQuery, headers=headers, data=document)
         if result.status_code == 200:
@@ -485,14 +529,14 @@ class Profiles:
         return json.dumps(final, indent=2)
 
 
-    def set(self, name=None, description=None, ville=None, adresse=None, position=None, site=None):
-        document = self.configDocSet(name, description, ville, adresse, position, site)
+    def set(self, name=None, description=None, ville=None, adresse=None, position=None, site=None, avatar=None):
+        document = self.configDocSet(name, description, ville, adresse, position, site, avatar)
         result = self.sendDocument(document,'set')
 
         print(result)
         return result
     
-    def get(self, profile=None):
+    def get(self, profile=None, avatar=None):
         if not profile:
             profile = self.pubkey
         if not re.match(PUBKEY_REGEX, profile) or len(profile) > 45:
@@ -500,7 +544,7 @@ class Profiles:
         else:
             scope = '_id'
         
-        document = self.configDocGet(profile, scope)
+        document = self.configDocGet(profile, scope, avatar)
         resultJSON = self.sendDocument(document, 'get')
         result = self.parseJSON(resultJSON)
 
@@ -508,8 +552,8 @@ class Profiles:
         return result
 
     def erase(self):
-        document = self.configDocSet(None, None, None, None, None, None)
-        result = self.sendDocument(document,'set')
+        document = self.configDocErase()
+        result = self.sendDocument(document,'erase')
 
         print(result)
         return result
