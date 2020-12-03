@@ -105,9 +105,12 @@ else:
         dunikey = keyPath
     else:
         keyPath = False
+if not os.path.isfile(dunikey):
+    HOME = os.getenv("HOME")
+    dunikey = HOME + dunikey
     if not os.path.isfile(dunikey):
-        HOME = os.getenv("HOME")
-        dunikey = HOME + os.getenv('DUNIKEY')
+        sys.stderr.write('Le fichier de trousseau {0} est introuvable.\n'.format(dunikey))
+        sys.exit(1)
 
 
 # Build cesiumMessaging class
