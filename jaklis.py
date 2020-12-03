@@ -19,6 +19,7 @@ load_dotenv(dotenv_path)
 # Parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-v', '--version', action='store_true', help="Affiche la version actuelle du programme")
+parser.add_argument('-k', '--key', help="Chemin vers mon trousseau de clé (PubSec)")
 
 subparsers = parser.add_subparsers()
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
@@ -30,7 +31,12 @@ eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesi
 like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE)")
 unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
 
-if len(sys.argv) <= 1 or not sys.argv[1] in ('read','send','delete','set','get','erase','like','unlike','-v','--version'):
+if sys.argv[1] == '-k':
+    cmd = sys.argv[3]
+else:
+    cmd = sys.argv[1]
+
+if len(sys.argv) <= 1 or not cmd in ('read','send','delete','set','get','erase','like','unlike','-v','--version'):
     sys.stderr.write("Veuillez indiquer une commande valide:\n\n")
     parser.print_help()
     sys.exit(1)
@@ -89,22 +95,26 @@ pod = os.getenv('POD')
 if not pod:
     pod="https://g1.data.le-sou.org"
 
-dunikey = os.getenv('DUNIKEY')
-if not dunikey:
-    keyPath = createTmpDunikey()
-    dunikey = keyPath
-else:
+if args.key:
+    dunikey = args.key
     keyPath = False
-if not os.path.isfile(dunikey):
-    HOME = os.getenv("HOME")
-    dunikey = HOME + os.getenv('DUNIKEY')
+else:
+    dunikey = os.getenv('DUNIKEY')
+    if not dunikey:
+        keyPath = createTmpDunikey()
+        dunikey = keyPath
+    else:
+        keyPath = False
+    if not os.path.isfile(dunikey):
+        HOME = os.getenv("HOME")
+        dunikey = HOME + os.getenv('DUNIKEY')
 
 
 # Build cesiumMessaging class
-if sys.argv[1] == "read":
+if cmd == "read":
     messages = ReadFromCesium(dunikey, pod)
     messages.read(args.number, args.outbox, args.json)
-elif sys.argv[1] == "send":
+elif cmd == "send":
     if args.fichier:
         with open(args.fichier, 'r') as f:
             msgT = f.read()
@@ -123,29 +133,29 @@ elif sys.argv[1] == "send":
     messages = SendToCesium(dunikey, pod, args.destinataire, args.outbox)
     messages.send(titre, msg)
 
-elif sys.argv[1] == "delete":
+elif cmd == "delete":
     messages = DeleteFromCesium(dunikey, pod, args.outbox)
     messages.delete(args.id[0])
 
 # Build cesium+ profiles class
-elif sys.argv[1] in ('set','get','erase'):
+elif cmd in ('set','get','erase'):
     cesium = Profiles(dunikey, pod)
-    if sys.argv[1] == "set":
+    if cmd == "set":
         cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site, args.avatar)
-    elif sys.argv[1] == "get":
+    elif cmd == "get":
         cesium.get(args.profile, args.avatar)
-    elif sys.argv[1] == "erase":
+    elif cmd == "erase":
         cesium.erase()
 
 # Build cesium+ likes class
-elif sys.argv[1] == "like":
+elif cmd == "like":
     if args.stars or args.stars == 0:
         gchange = SendLikes(dunikey, pod)
         gchange.like(args.stars, args.profile)
     else:
         gchange = ReadLikes(dunikey, pod)
         gchange.readLikes(args.profile)
-elif sys.argv[1] == "unlike":
+elif cmd == "unlike":
     gchange = UnLikes(dunikey, pod)
     gchange.unLike(args.profile)
 
