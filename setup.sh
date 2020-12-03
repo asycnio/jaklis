@@ -10,5 +10,3 @@ done
 
 pip3 install -r requirements.txt
 chmod u+x dialog.py
-
-#test git
