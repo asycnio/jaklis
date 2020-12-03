@@ -6,7 +6,6 @@ from time import sleep
 from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
-from PIL import Image
 
 PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 
@@ -400,7 +399,6 @@ class Profiles:
         if avatar:
             avatar = open(avatar, 'rb').read()
             avatar = base64.b64encode(avatar).decode()
-            # print(avatar)
             data['avatar'] = {}
             data['avatar']['_content'] = avatar
             data['avatar']['_content_type'] = "image/png"
