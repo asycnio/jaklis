@@ -105,8 +105,12 @@ if sys.argv[1] == "read":
 elif sys.argv[1] == "send":
     if args.fichier:
         with open(args.fichier, 'r') as f:
-            titre = f.readline().replace('\n','')
-            msg = ''.join(f.read().splitlines(True)[0:])
+            msgT = f.read()
+            titre = msgT.splitlines(True)[0].replace('\n', '')
+            msg = ''.join(msgT.splitlines(True)[1:])
+            if args.titre:
+                titre = args.titre
+                msg = msgT
     elif args.titre and args.message:
         titre = args.titre
         msg = args.message
