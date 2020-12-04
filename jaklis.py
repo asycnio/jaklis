@@ -20,6 +20,7 @@ load_dotenv(dotenv_path)
 parser = argparse.ArgumentParser()
 parser.add_argument('-v', '--version', action='store_true', help="Affiche la version actuelle du programme")
 parser.add_argument('-k', '--key', help="Chemin vers mon trousseau de clé (PubSec)")
+parser.add_argument('-n', '--node', help="Adresse du noeud Cesium+ ou Gchange à utiliser")
 
 subparsers = parser.add_subparsers()
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
@@ -31,8 +32,11 @@ eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesi
 like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE)")
 unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
 
-if sys.argv[1] == '-k':
-    cmd = sys.argv[3]
+if sys.argv[1] in ('-k','-n'):
+    if sys.argv[3] in ('-k','-n'):
+        cmd = sys.argv[5]
+    else:
+        cmd = sys.argv[3]
 else:
     cmd = sys.argv[1]
 
@@ -91,7 +95,10 @@ def createTmpDunikey():
     
     return keyPath
 
-pod = os.getenv('POD')
+if args.node:
+    pod = args.node
+else:
+    pod = os.getenv('POD')
 if not pod:
     pod="https://g1.data.le-sou.org"
 

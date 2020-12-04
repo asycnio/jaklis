@@ -1,6 +1,4 @@
-# Utilisation de la messagerie Cesium+/Gchange
-## Réception/Envoi/Suppression de messages
-
+# Client CLI for Cesium+/Ḡchange pod
 ## Installation
 
 Linux:
@@ -15,48 +13,58 @@ Débrouillez-vous.
 
 ## Utilisation
 
-Renseignez le fichier **.env** (Généré lors de la première tentative d'execution, ou à copier depuis .env.template).
+Renseignez optionnellement le fichier **.env** (Généré lors de la première tentative d'execution, ou à copier depuis .env.template).
 
-### Lecture des messages
 ```
-./dialog.py read
-```
-
-_Options_:
-```
--h, --help            show this help message and exit
--n NUMBER, --number NUMBER
-                    Affiche les NUMBER derniers messages
--o, --outbox          Lit les messages envoyés
+./jaklis.py -h
 ```
 
-### Envoi de messages
 ```
-./dialog.py send -d DESTINATAIRE
+usage: jaklis.py [-h] [-v] [-k KEY] [-n NODE] {read,send,delete,get,set,erase,like,unlike} ...
+
+positional arguments:
+  {read,send,delete,get,set,erase,like,unlike}
+    read                Lecture des messages
+    send                Envoi d'un message
+    delete              Supression d'un message
+    get                 Voir un profile Cesium+
+    set                 Configurer son profile Cesium+
+    erase               Effacer son profile Cesium+
+    like                Voir les likes d'un profile / Liker un profile (option -s NOTE)
+    unlike              Supprimer un like
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --version         Affiche la version actuelle du programme
+  -k KEY, --key KEY     Chemin vers mon trousseau de clé (PubSec)
+  -n NODE, --node NODE  Adresse du noeud Cesium+ ou Gchange à utiliser
 ```
 
-_Options_:
+Utilisez `./jaklis CMD -h` où `CMD` est la commande souhaité pour obtenir l'aide détaillé de cette commande.
+
+### Exemples:
+
+Lire les 10 derniers messages de mon compte indiqué dans le fichier `.env` (par defaut 3 messages):
 ```
--h, --help            show this help message and exit
--d DESTINATAIRE, --destinataire DESTINATAIRE
-                    Destinataire du message
--t TITRE, --titre TITRE
-                    Titre du message à envoyer
--m MESSAGE, --message MESSAGE
-                    Message à envoyer
--f FICHIER, --fichier FICHIER
-                    Envoyer le message contenu dans le fichier 'FICHIER'
--o, --outbox          Envoi le message sur la boite d'envoi
+./jaklis read -n10
 ```
 
-### Suppression de messages
+Envoyer un message à la clé publique `Do99s6wQR2JLfhirPdpAERSjNbmjjECzGxHNJMiNKT3P` avec un fichier de trousseau particulier:
 ```
-./dialog.py delete -i ID
+./jaklis.py -k /home/saucisse/mon_fichier_de_trousseau.dunikey send -d Do99s6wQR2JLfhirPdpAERSjNbmjjECzGxHNJMiNKT3P -t "Objet du message" -m "Corps de mon message"
 ```
 
-_Options_:
+Noter 4 étoiles le profile `S9EJbjbaGPnp26VuV6fKjR7raE1YkNhUGDgoydHvAJ1` sur gchange:
 ```
--h, --help      show this help message and exit
--i ID, --id ID  ID du message à supprimer
--o, --outbox    Suppression d'un message envoyé
+./jaklis.py -n https://data.gchange.fr like -p S9EJbjbaGPnp26VuV6fKjR7raE1YkNhUGDgoydHvAJ1 -s 4
+```
+
+Paramétrer mon profile Cesium+:
+```
+./jaklis.py set -n "Sylvain Durif" -v "Bugarach" -a "42 route de Vénus" -d "Christ cosmique" -pos 48.539927 2.6608169 -s https://www.creationmonetaire.info -A mon_avatar.png
+```
+
+Effacer mon profile Gchange:
+```
+./jaklis.py -n https://data.gchange.fr erase
 ```
