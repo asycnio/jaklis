@@ -32,8 +32,8 @@ eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesi
 like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE)")
 unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
 
-if sys.argv[1] in ('-k','-n'):
-    if sys.argv[3] in ('-k','-n'):
+if sys.argv[1] in ('-k','-n','--key','--node'):
+    if sys.argv[3] in ('-k','-n','--key','--node'):
         cmd = sys.argv[5]
     else:
         cmd = sys.argv[3]
