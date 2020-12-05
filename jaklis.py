@@ -22,7 +22,7 @@ parser.add_argument('-v', '--version', action='store_true', help="Affiche la ver
 parser.add_argument('-k', '--key', help="Chemin vers mon trousseau de clé (PubSec)")
 parser.add_argument('-n', '--node', help="Adresse du noeud Cesium+ ou Gchange à utiliser")
 
-subparsers = parser.add_subparsers(title="Commandes de jaklis", dest="cmd", required=True)
+subparsers = parser.add_subparsers(title="Commandes de jaklis", dest="cmd")
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
 send_cmd = subparsers.add_parser('send', help="Envoi d'un message")
 delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
@@ -65,6 +65,10 @@ unlike_cmd.add_argument('-p', '--profile', help="Profile à déliker")
 
 args = parser.parse_args()
 cmd = args.cmd
+
+if not cmd:
+    parser.print_help()
+    sys.exit(1)
 
 if args.version:
   print(VERSION)
