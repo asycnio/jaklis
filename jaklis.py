@@ -10,10 +10,12 @@ from lib.likes import ReadLikes, SendLikes, UnLikes
 
 VERSION = "0.0.1"
 
+MY_PATH = os.path.realpath(os.path.dirname(sys.argv[0])) + '/'
+
 # Get variables environment
-if not os.path.isfile('.env'):
-    copyfile(".env.template", ".env")
-dotenv_path = join(dirname(__file__), '.env')
+if not os.path.isfile(MY_PATH + '.env'):
+    copyfile(MY_PATH + ".env.template",MY_PATH +  ".env")
+dotenv_path = join(dirname(__file__),MY_PATH +  '.env')
 load_dotenv(dotenv_path)
 
 # Parse arguments
