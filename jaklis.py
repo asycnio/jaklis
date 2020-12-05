@@ -17,12 +17,12 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 # Parse arguments
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="Client CLI pour Cesium+ et Ḡchange")
 parser.add_argument('-v', '--version', action='store_true', help="Affiche la version actuelle du programme")
 parser.add_argument('-k', '--key', help="Chemin vers mon trousseau de clé (PubSec)")
 parser.add_argument('-n', '--node', help="Adresse du noeud Cesium+ ou Gchange à utiliser")
 
-subparsers = parser.add_subparsers(dest="cmd")
+subparsers = parser.add_subparsers(title="Commandes de jaklis", dest="cmd", required=True)
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
 send_cmd = subparsers.add_parser('send', help="Envoi d'un message")
 delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
