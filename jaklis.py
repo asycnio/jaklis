@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, sys, os, random, string, getpass
+import argparse, sys, os, random, string, getpass, json
 from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
@@ -22,7 +22,7 @@ parser.add_argument('-v', '--version', action='store_true', help="Affiche la ver
 parser.add_argument('-k', '--key', help="Chemin vers mon trousseau de clé (PubSec)")
 parser.add_argument('-n', '--node', help="Adresse du noeud Cesium+ ou Gchange à utiliser")
 
-subparsers = parser.add_subparsers()
+subparsers = parser.add_subparsers(dest="cmd")
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
 send_cmd = subparsers.add_parser('send', help="Envoi d'un message")
 delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
@@ -31,19 +31,6 @@ setProfile_cmd = subparsers.add_parser('set', help="Configurer son profile Cesiu
 eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesium+")
 like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE)")
 unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
-
-if sys.argv[1] in ('-k','-n','--key','--node'):
-    if sys.argv[3] in ('-k','-n','--key','--node'):
-        cmd = sys.argv[5]
-    else:
-        cmd = sys.argv[3]
-else:
-    cmd = sys.argv[1]
-
-if len(sys.argv) <= 1 or not cmd in ('read','send','delete','set','get','erase','like','unlike','-v','--version'):
-    sys.stderr.write("Veuillez indiquer une commande valide:\n\n")
-    parser.print_help()
-    sys.exit(1)
 
 # Messages management
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
@@ -77,6 +64,7 @@ like_cmd.add_argument('-s', '--stars', type=int, help="Nombre d'étoile")
 unlike_cmd.add_argument('-p', '--profile', help="Profile à déliker")
 
 args = parser.parse_args()
+cmd = args.cmd
 
 if args.version:
   print(VERSION)
