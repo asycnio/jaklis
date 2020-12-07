@@ -1,8 +1,13 @@
-import string, random, base64
-from lib.cesiumCommon import CesiumCommon
+import re, string, random, base64
+from lib.cesiumCommon import CesiumCommon, PUBKEY_REGEX
 from lib.messaging import ReadFromCesium, SendToCesium, DeleteFromCesium
+from lib.profiles import Profiles
+from lib.likes import ReadLikes, SendLikes, UnLikes
 
 class CesiumPlus(CesiumCommon):
+
+    #################### Messaging ####################
+
     def read(self, nbrMsg, outbox, isJSON):
         readCesium = ReadFromCesium(self.dunikey,  self.pod)
         jsonMsg = readCesium.sendDocument(nbrMsg, outbox)
@@ -31,3 +36,58 @@ class CesiumPlus(CesiumCommon):
         for idMsg in idsMsgList:
             finalDoc = deleteCesium.configDoc(idMsg, outbox)
             deleteCesium.sendDocument(finalDoc, idMsg)
+
+    #################### Profiles ####################
+
+    def set(self, name=None, description=None, ville=None, adresse=None, position=None, site=None, avatar=None):
+        setProfile = Profiles(self.dunikey,  self.pod)
+        document = setProfile.configDocSet(name, description, ville, adresse, position, site, avatar)
+        result = setProfile.sendDocument(document,'set')
+
+        print(result)
+        return result
+    
+    def get(self, profile=None, avatar=None):
+        getProfile = Profiles(self.dunikey,  self.pod)
+        if not profile:
+            profile = self.pubkey
+        if not re.match(PUBKEY_REGEX, profile) or len(profile) > 45:
+            scope = 'title'
+        else:
+            scope = '_id'
+        
+        document = getProfile.configDocGet(profile, scope, avatar)
+        resultJSON = getProfile.sendDocument(document, 'get')
+        result = getProfile.parseJSON(resultJSON)
+
+        print(result)
+
+    def erase(self):
+        eraseProfile = Profiles(self.dunikey,  self.pod)
+        document = eraseProfile.configDocErase()
+        result = eraseProfile.sendDocument(document,'erase')
+
+        print(result)
+
+    #################### Likes ####################
+
+    def readLikes(self, profile=False):
+        likes = ReadLikes(self.dunikey,  self.pod)
+        document = likes.configDoc(profile)
+        result = likes.sendDocument(document)
+        result = likes.parseResult(result)
+
+        print(result)
+
+    def like(self, stars, profile=False):
+        likes = SendLikes(self.dunikey,  self.pod)
+        document = likes.configDoc(profile, stars)
+        if document:
+            likes.sendDocument(document, profile)
+
+    def unLike(self, pubkey, silent=False):
+        likes = UnLikes(self.dunikey,  self.pod)
+        idLike = likes.checkLike(pubkey)
+        if idLike:
+            document = likes.configDoc(idLike)
+            likes.sendDocument(document, silent)

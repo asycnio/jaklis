@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os, sys, ast, requests, json, base58, base64, time, string, random, re
 from lib.natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
 from time import sleep
@@ -124,24 +122,12 @@ class ReadLikes:
         data = json.dumps(data)
 
         result = requests.post('{0}/user/profile/_search'.format(self.pod), headers=headers, data=data)
-        result = json.loads(result.text)['hits']['hits'][0]['_source']
-
-        return result
-
-    def readLikes(self, profile=False):
-        document = self.configDoc(profile)
-        result = self.sendDocument(document)
-        result = self.parseResult(result)
-
-        print(result)
-        return result
-
-
+        result = json.loads(result.text)['hits']['hits']
+        for i in result:
+            return i['_source']
 
 
 #################### Like class ####################
-
-
 
 
 class SendLikes:
@@ -216,7 +202,10 @@ class SendLikes:
             resultJson = json.loads(result.text)
             if 'DuplicatedDocumentException' in resultJson['error']:
                 rmLike = UnLikes(self.dunikey, self.pod)
-                rmLike.unLike(pubkey, True)
+                idLike = rmLike.checkLike(pubkey)
+                if idLike:
+                    document = rmLike.configDoc(idLike)
+                    rmLike.sendDocument(document, True)
                 sleep(0.5)
                 self.sendDocument(document, pubkey)
                 return resultJson['error']
@@ -227,19 +216,7 @@ class SendLikes:
             sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + resultJson['error'] + '\n')
 
 
-
-
-    def like(self, stars, profile=False):
-        document = self.configDoc(profile, stars)
-        if document:
-            self.sendDocument(document, profile)
-
-
-
-
 #################### Unlike class ####################
-
-
 
 
 class UnLikes:
@@ -321,11 +298,3 @@ class UnLikes:
             return result.text
         else:
             sys.stderr.write("Echec de l'envoi du document de lecture des messages...\n" + result.text + '\n')
-
-
-    def unLike(self, pubkey, silent=False):
-        idLike = self.checkLike(pubkey)
-        if idLike:
-            document = self.configDoc(idLike)
-            self.sendDocument(document, silent)
-

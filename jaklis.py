@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
-import argparse, sys, os, random, string, getpass, json
+import argparse, sys, os, getpass, string, random
 from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
 from lib.cesium import CesiumPlus
-from lib.likes import ReadLikes, SendLikes, UnLikes
 
-VERSION = "0.0.1"
+__version__ = "0.0.2"
 
 MY_PATH = os.path.realpath(os.path.dirname(sys.argv[0])) + '/'
 
@@ -73,7 +72,7 @@ if not cmd:
     sys.exit(1)
 
 if args.version:
-  print(VERSION)
+  print(__version__)
   sys.exit(0)
 
 def createTmpDunikey():
@@ -142,26 +141,21 @@ elif cmd == "delete":
     cesium.delete(args.id[0], args.outbox)
 
 # Profiles
-elif cmd in ('set','get','erase'):
-    cesium = Profiles(dunikey, pod)
-    if cmd == "set":
-        cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site, args.avatar)
-    elif cmd == "get":
-        cesium.get(args.profile, args.avatar)
-    elif cmd == "erase":
-        cesium.erase()
+elif cmd == "set":
+    cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site, args.avatar)
+elif cmd == "get":
+    cesium.get(args.profile, args.avatar)
+elif cmd == "erase":
+    cesium.erase()
 
 # Likes
 elif cmd == "like":
     if args.stars or args.stars == 0:
-        gchange = SendLikes(dunikey, pod)
-        gchange.like(args.stars, args.profile)
+        cesium.like(args.stars, args.profile)
     else:
-        gchange = ReadLikes(dunikey, pod)
-        gchange.readLikes(args.profile)
+        cesium.readLikes(args.profile)
 elif cmd == "unlike":
-    gchange = UnLikes(dunikey, pod)
-    gchange.unLike(args.profile)
+    cesium.unLike(args.profile)
 
 
 if keyPath:

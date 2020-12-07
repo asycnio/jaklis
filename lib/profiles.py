@@ -123,33 +123,3 @@ class Profiles(CesiumCommon):
             return json.dumps(final, indent=2)
         else:
             return 'Profile vide'
-
-    
-    def set(self, name=None, description=None, ville=None, adresse=None, position=None, site=None, avatar=None):
-        document = self.configDocSet(name, description, ville, adresse, position, site, avatar)
-        result = self.sendDocument(document,'set')
-
-        print(result)
-        return result
-    
-    def get(self, profile=None, avatar=None):
-        if not profile:
-            profile = self.pubkey
-        if not re.match(PUBKEY_REGEX, profile) or len(profile) > 45:
-            scope = 'title'
-        else:
-            scope = '_id'
-        
-        document = self.configDocGet(profile, scope, avatar)
-        resultJSON = self.sendDocument(document, 'get')
-        result = self.parseJSON(resultJSON)
-
-        print(result)
-        return result
-
-    def erase(self):
-        document = self.configDocErase()
-        result = self.sendDocument(document,'erase')
-
-        print(result)
-        return result

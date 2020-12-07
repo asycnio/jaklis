@@ -5,6 +5,10 @@ from termcolor import colored
 from lib.natools import fmt, get_privkey, box_decrypt, box_encrypt
 from lib.cesiumCommon import CesiumCommon, pp_json, PUBKEY_REGEX
 
+
+#################### Reading class ####################
+
+
 class ReadFromCesium(CesiumCommon):
     # Configure JSON document to send
     def configDoc(self, nbrMsg, outbox):
@@ -137,12 +141,7 @@ class ReadFromCesium(CesiumCommon):
             return data
 
 
-
-
-
 #################### Sending class ####################
-
-
 
 
 class SendToCesium(CesiumCommon):
@@ -192,12 +191,7 @@ class SendToCesium(CesiumCommon):
                 print(str(pp_json(result.text)) + '\n')
 
 
-
-
-
 #################### Deleting class ####################
-
-
 
 
 class DeleteFromCesium(CesiumCommon):
