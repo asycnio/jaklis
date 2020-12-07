@@ -5,7 +5,7 @@ from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
-from lib.cesium import Profiles, CesiumPlus
+from lib.cesium import CesiumPlus
 from lib.likes import ReadLikes, SendLikes, UnLikes
 
 VERSION = "0.0.1"
