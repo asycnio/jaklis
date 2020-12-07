@@ -4,35 +4,12 @@ from time import sleep
 from hashlib import sha256
 from datetime import datetime
 from termcolor import colored
+from lib.cesiumCommon import CesiumCommon, PUBKEY_REGEX
 
-PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
-
-class ReadLikes:
-    def __init__(self, dunikey, pod):
-        # Get my pubkey from my private key
-        try:
-            self.dunikey = dunikey
-            if not dunikey:
-                raise ValueError("Dunikey is empty")
-        except:
-            sys.stderr.write("Please fill the path to your private key (PubSec)\n")
-            sys.exit(1)
-
-        self.issuer = get_privkey(dunikey, "pubsec").pubkey
-        self.pod = pod
-
-        if not re.match(PUBKEY_REGEX, self.issuer) or len(self.issuer) > 45:
-            sys.stderr.write("La clé publique n'est pas au bon format.\n")
-            sys.exit(1)
-
+class ReadLikes(CesiumCommon):
     # Configure JSON document to send
     def configDoc(self, profile):
-        if not profile: profile = self.issuer
-        # elif len(profile) < 42:
-        #     print(len(profile))
-        #     gProfile = requests.get('{0}/user/profile/{1}'.format(self.pod, issuer))
-        #     gProfile = json.loads(gProfile.text)['_source']
-        #     pseudo = gProfile['title']
+        if not profile: profile = self.pubkey
 
         data = {}
         data['query'] = {}
@@ -96,7 +73,7 @@ class ReadLikes:
                 payTo = ''
             id = i['_id']
             level = i['_source']['level']
-            if issuer == self.issuer:
+            if issuer == self.pubkey:
                 finalPrint['yours'] = { 'id' : id, 'pseudo' : pseudo, 'payTo' : payTo, 'level' : level }
             else:
                 finalPrint['likes'].append({ 'issuer' : issuer, 'pseudo' : pseudo, 'payTo' : payTo, 'level' : level })
@@ -130,27 +107,10 @@ class ReadLikes:
 #################### Like class ####################
 
 
-class SendLikes:
-    def __init__(self, dunikey, pod):
-        # Get my pubkey from my private key
-        try:
-            self.dunikey = dunikey
-            if not dunikey:
-                raise ValueError("Dunikey is empty")
-        except:
-            sys.stderr.write("Please fill the path to your private key (PubSec)\n")
-            sys.exit(1)
-
-        self.issuer = get_privkey(dunikey, "pubsec").pubkey
-        self.pod = pod
-
-        if not re.match(PUBKEY_REGEX, self.issuer) or len(self.issuer) > 45:
-            sys.stderr.write("La clé publique n'est pas au bon format.\n")
-            sys.exit(1)
-
+class SendLikes(CesiumCommon):
     # Configure JSON document to send
     def configDoc(self, profile, likes):
-        if not profile: profile = self.issuer
+        if not profile: profile = self.pubkey
         if likes not in range(0, 6):
             sys.stderr.write(colored('Votre like doit être compris entre 0 et 5.\n', 'red'))
             return False
@@ -166,7 +126,7 @@ class SendLikes:
         data['kind'] = "STAR"
         data['level'] = likes
         data['time'] = timeSent
-        data['issuer'] = self.issuer
+        data['issuer'] = self.pubkey
 
         document = json.dumps(data)
 
@@ -219,27 +179,9 @@ class SendLikes:
 #################### Unlike class ####################
 
 
-class UnLikes:
-    def __init__(self, dunikey, pod):
-        # Get my pubkey from my private key
-        try:
-            self.dunikey = dunikey
-            if not dunikey:
-                raise ValueError("Dunikey is empty")
-        except:
-            sys.stderr.write("Please fill the path to your private key (PubSec)\n")
-            sys.exit(1)
-
-        self.issuer = get_privkey(dunikey, "pubsec").pubkey
-        self.pod = pod
-
-        if not re.match(PUBKEY_REGEX, self.issuer) or len(self.issuer) > 45:
-            sys.stderr.write("La clé publique n'est pas au bon format.\n")
-            sys.exit(1)
-    
+class UnLikes(CesiumCommon):
     # Check if you liked this profile
     def checkLike(self, pubkey):
-
         readProfileLikes = ReadLikes(self.dunikey, self.pod)
         document = readProfileLikes.configDoc(pubkey)
         result = readProfileLikes.sendDocument(document)
@@ -262,7 +204,7 @@ class UnLikes:
         data['index'] = "like"
         data['type'] = "record"
         data['id'] = idLike
-        data['issuer'] = self.issuer
+        data['issuer'] = self.pubkey
         data['time'] = timeSent
 
         document = json.dumps(data)
