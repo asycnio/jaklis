@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os, sys, ast, requests, json, base58, base64, time, string, random, re
 from lib.natools import fmt, sign, get_privkey, box_decrypt, box_encrypt
 from time import sleep
@@ -17,7 +15,7 @@ def pp_json(json_thing, sort=True, indents=4):
         print(json.dumps(json_thing, sort_keys=sort, indent=indents))
     return None
 
-class ReadFromCesium:
+class CesiumPlus:
     def __init__(self, dunikey, pod):
         # Get my pubkey from my private key
         try:
@@ -28,13 +26,61 @@ class ReadFromCesium:
             sys.stderr.write("Please fill the path to your private key (PubSec)\n")
             sys.exit(1)
 
-        self.recipient = get_privkey(dunikey, "pubsec").pubkey
+        self.pubkey = get_privkey(dunikey, "pubsec").pubkey
         self.pod = pod
 
-        if not re.match(PUBKEY_REGEX, self.recipient) or len(self.recipient) > 45:
+        if not re.match(PUBKEY_REGEX, self.pubkey) or len(self.pubkey) > 45:
             sys.stderr.write("La clé publique n'est pas au bon format.\n")
             sys.exit(1)
 
+    def signDoc(self, document):
+        # Generate hash of document
+        hashDoc = sha256(document.encode()).hexdigest().upper()
+
+        # Generate signature of document
+        signature = fmt["64"](sign(hashDoc.encode(), get_privkey(self.dunikey, "pubsec"))[:-len(hashDoc.encode())]).decode()
+
+        # Build final document
+        data = {}
+        data['hash'] = hashDoc
+        data['signature'] = signature
+        signJSON = json.dumps(data)
+        finalJSON = {**json.loads(signJSON), **json.loads(document)}
+        finalDoc = json.dumps(finalJSON)
+
+        return finalDoc
+
+    def read(self, nbrMsg, outbox, isJSON):
+        readCesium = ReadFromCesium(self.dunikey,  self.pod)
+        jsonMsg = readCesium.sendDocument(nbrMsg, outbox)
+        if isJSON:
+            jsonFormat = readCesium.jsonMessages(jsonMsg, nbrMsg, outbox)
+            print(jsonFormat)
+        else:
+            readCesium.readMessages(jsonMsg, nbrMsg, outbox)
+
+    def send(self, title, msg, recipient, outbox):
+        sendCesium = SendToCesium(self.dunikey, self.pod)
+        sendCesium.recipient = recipient
+
+        # Generate pseudo-random nonce
+        nonce=[]
+        for _ in range(32):
+            nonce.append(random.choice(string.ascii_letters + string.digits))
+        sendCesium.nonce = base64.b64decode(''.join(nonce))
+
+        finalDoc = sendCesium.configDoc(sendCesium.encryptMsg(title), sendCesium.encryptMsg(msg))       # Configure JSON document to send
+        sendCesium.sendDocument(finalDoc, outbox)                                                       # Send final signed document
+
+    def delete(self, idsMsgList, outbox):
+        deleteCesium = DeleteFromCesium(self.dunikey,  self.pod)
+        # deleteCesium.issuer = recipient
+        for idMsg in idsMsgList:
+            finalDoc = deleteCesium.configDoc(idMsg, outbox)
+            deleteCesium.sendDocument(finalDoc, idMsg)
+
+
+class ReadFromCesium(CesiumPlus):
     # Configure JSON document to send
     def configDoc(self, nbrMsg, outbox):
         boxType = "issuer" if outbox else "recipient"
@@ -48,7 +94,7 @@ class ReadFromCesium:
         data['query']['bool'] = {}
         data['query']['bool']['filter'] = {}
         data['query']['bool']['filter']['term'] = {}
-        data['query']['bool']['filter']['term'][boxType] = self.recipient
+        data['query']['bool']['filter']['term'][boxType] = self.pubkey
 
         document = json.dumps(data)
         return document
@@ -116,7 +162,7 @@ class ReadFromCesium:
                 
             print(colored(infoTotal.center(rows, '#'), "yellow"))
     
-        # Parse JSON result and display messages
+    # Parse JSON result and display messages
     def jsonMessages(self, msgJSON, nbrMsg, outbox):
         def decrypt(msg):
             msg64 = base64.b64decode(msg)
@@ -165,13 +211,6 @@ class ReadFromCesium:
             data = json.dumps(data, indent=2)
             return data
 
-    def read(self, nbrMsg, outbox, isJSON):
-        jsonMsg = self.sendDocument(nbrMsg, outbox)
-        if isJSON:
-            jsonFormat = self.jsonMessages(jsonMsg, nbrMsg, outbox)
-            print(jsonFormat)
-        else:
-            self.readMessages(jsonMsg, nbrMsg, outbox)
 
 
 
@@ -181,33 +220,7 @@ class ReadFromCesium:
 
 
 
-class SendToCesium:
-    def __init__(self, dunikey, pod, recipient, outbox):
-        # Get my pubkey from my private key
-        try:
-            self.dunikey = dunikey
-            if not dunikey:
-                raise ValueError("Dunikey is empty")
-        except:
-            sys.stderr.write("Please fill the path to your private key (PubSec)\n")
-            sys.exit(1)
-
-        self.issuer = get_privkey(dunikey, "pubsec").pubkey
-        self.pod = pod
-        self.recipient = recipient
-        self.outbox = outbox
-
-        # Generate pseudo-random nonce
-        nonce=[]
-        for _ in range(32):
-            nonce.append(random.choice(string.ascii_letters + string.digits))
-        self.nonce = base64.b64decode(''.join(nonce))
-
-        if not re.match(PUBKEY_REGEX, recipient) or len(recipient) > 45:
-            sys.stderr.write("La clé publique n'est pas au bon format.\n")
-            sys.exit(1)
-
-
+class SendToCesium(CesiumPlus):
     def encryptMsg(self, msg):
         return fmt["64"](box_encrypt(msg.encode(), get_privkey(self.dunikey, "pubsec"), self.recipient, self.nonce)).decode()
 
@@ -219,7 +232,7 @@ class SendToCesium:
 
         # Generate custom JSON
         data = {}
-        data['issuer'] = self.issuer
+        data['issuer'] = self.pubkey
         data['recipient'] = self.recipient
         data['title'] = title
         data['content'] = msg
@@ -228,20 +241,11 @@ class SendToCesium:
         data['version'] = 2
         document = json.dumps(data)
 
-        # Generate hash of document
-        hashDoc = sha256(document.encode()).hexdigest().upper()
-
-        # Generate signature of document
-        signature = fmt["64"](sign(hashDoc.encode(), get_privkey(self.dunikey, "pubsec"))[:-len(hashDoc.encode())]).decode()
-
-        # Build final document
-        finalDoc = '{' + '"hash":"{0}","signature":"{1}",'.format(hashDoc, signature) + document[1:]
-
-        return finalDoc
+        return self.signDoc(document)
 
 
-    def sendDocument(self, document):
-        boxType = "outbox" if self.outbox else "inbox"
+    def sendDocument(self, document, outbox):
+        boxType = "outbox" if outbox else "inbox"
 
         headers = {
             'Content-type': 'application/json',
@@ -262,9 +266,6 @@ class SendToCesium:
                 sys.stderr.write("Erreur inconnue:" + '\n')
                 print(str(pp_json(result.text)) + '\n')
 
-    def send(self, title, msg):
-        finalDoc = self.configDoc(self.encryptMsg(title), self.encryptMsg(msg))     # Configure JSON document to send
-        self.sendDocument(finalDoc)                                                 # Send final signed document
 
 
 
@@ -274,27 +275,12 @@ class SendToCesium:
 
 
 
-class DeleteFromCesium:
-    def __init__(self, dunikey, pod, outbox):
-        # Get my pubkey from my private key
-        try:
-            self.dunikey = dunikey
-            if not dunikey:
-                raise ValueError("Dunikey is empty")
-        except:
-            sys.stderr.write("Please fill the path to your private key (PubSec)\n")
-            sys.exit(1)
-
-        self.issuer = get_privkey(dunikey, "pubsec").pubkey
-        self.pod = pod
-        self.outbox = outbox
-
-
-    def configDoc(self, idMsg):
+class DeleteFromCesium(CesiumPlus):
+    def configDoc(self, idMsg, outbox):
         # Get current timestamp
         timeSent = int(time.time())
 
-        boxType = "outbox" if self.outbox else "inbox"
+        boxType = "outbox" if outbox else "inbox"
 
         # Generate document to customize
         data = {}
@@ -302,25 +288,11 @@ class DeleteFromCesium:
         data['index'] = "message"
         data['type'] = boxType
         data['id'] = idMsg
-        data['issuer'] = self.issuer
+        data['issuer'] = self.pubkey
         data['time'] = timeSent
         document = json.dumps(data)
 
-        # Generate hash of document
-        hashDoc = sha256(document.encode()).hexdigest().upper()
-
-        # Generate signature of document
-        signature = fmt["64"](sign(hashDoc.encode(), get_privkey(self.dunikey, "pubsec"))[:-len(hashDoc.encode())]).decode()
-
-        # Build final document
-        data = {}
-        data['hash'] = hashDoc
-        data['signature'] = signature
-        signJSON = json.dumps(data)
-        finalJSON = {**json.loads(signJSON), **json.loads(document)}
-        finalDoc = json.dumps(finalJSON)
-
-        return finalDoc
+        return self.signDoc(document)
 
     def sendDocument(self, document, idMsg):
         headers = {
@@ -343,11 +315,6 @@ class DeleteFromCesium:
                 return result
             else:
                 sys.stderr.write("Erreur inconnue.")
-
-    def delete(self, idsMsgList):
-        for idMsg in idsMsgList:
-            finalDoc = self.configDoc(idMsg)
-            self.sendDocument(finalDoc, idMsg)
 
 
 

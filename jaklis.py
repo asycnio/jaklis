@@ -5,7 +5,7 @@ from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
-from lib.cesium import ReadFromCesium, SendToCesium, DeleteFromCesium, Profiles
+from lib.cesium import Profiles, CesiumPlus
 from lib.likes import ReadLikes, SendLikes, UnLikes
 
 VERSION = "0.0.1"
@@ -114,10 +114,12 @@ if not os.path.isfile(dunikey):
         sys.exit(1)
 
 
-# Build cesiumMessaging class
+# Construct CesiumPlus object
+cesium = CesiumPlus(dunikey, pod)
+
+# Messaging
 if cmd == "read":
-    messages = ReadFromCesium(dunikey, pod)
-    messages.read(args.number, args.outbox, args.json)
+    cesium.read(args.number, args.outbox, args.json)
 elif cmd == "send":
     if args.fichier:
         with open(args.fichier, 'r') as f:
@@ -134,14 +136,12 @@ elif cmd == "send":
         titre = input("Indiquez le titre du message: ")
         msg = input("Indiquez le contenu du message: ")
 
-    messages = SendToCesium(dunikey, pod, args.destinataire, args.outbox)
-    messages.send(titre, msg)
+    cesium.send(titre, msg, args.destinataire, args.outbox)
 
 elif cmd == "delete":
-    messages = DeleteFromCesium(dunikey, pod, args.outbox)
-    messages.delete(args.id[0])
+    cesium.delete(args.id[0], args.outbox)
 
-# Build cesium+ profiles class
+# Profiles
 elif cmd in ('set','get','erase'):
     cesium = Profiles(dunikey, pod)
     if cmd == "set":
@@ -151,7 +151,7 @@ elif cmd in ('set','get','erase'):
     elif cmd == "erase":
         cesium.erase()
 
-# Build cesium+ likes class
+# Likes
 elif cmd == "like":
     if args.stars or args.stars == 0:
         gchange = SendLikes(dunikey, pod)
