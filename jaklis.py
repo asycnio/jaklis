@@ -6,6 +6,7 @@ from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
 from lib.cesium import CesiumPlus
+from lib.gva import GvaApi
 
 __version__ = "0.0.2"
 
@@ -21,7 +22,7 @@ load_dotenv(dotenv_path)
 parser = argparse.ArgumentParser(description="Client CLI pour Cesium+ et Ḡchange")
 parser.add_argument('-v', '--version', action='store_true', help="Affiche la version actuelle du programme")
 parser.add_argument('-k', '--key', help="Chemin vers mon trousseau de clé (PubSec)")
-parser.add_argument('-n', '--node', help="Adresse du noeud Cesium+ ou Gchange à utiliser")
+parser.add_argument('-n', '--node', help="Adresse du noeud Cesium+, Gchange ou Duniter à utiliser")
 
 subparsers = parser.add_subparsers(title="Commandes de jaklis", dest="cmd")
 read_cmd = subparsers.add_parser('read', help="Lecture des messages")
@@ -32,6 +33,9 @@ setProfile_cmd = subparsers.add_parser('set', help="Configurer son profile Cesiu
 eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesium+")
 like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE)")
 unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
+pay_cmd = subparsers.add_parser('pay', help="Payer en Ḡ1")
+history_cmd = subparsers.add_parser('history', help="Voir l'historique des transactions d'un compte Ḡ1")
+balance_cmd = subparsers.add_parser('balance', help="Voir le solde d'un compte Ḡ1")
 
 # Messages management
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
@@ -64,16 +68,31 @@ like_cmd.add_argument('-p', '--profile', help="Profile cible")
 like_cmd.add_argument('-s', '--stars', type=int, help="Nombre d'étoile")
 unlike_cmd.add_argument('-p', '--profile', help="Profile à déliker")
 
+# GVA usage
+pay_cmd.add_argument('-p', '--pubkey', help="Destinataire du paiement")
+pay_cmd.add_argument('-a', '--amount', type=float, help="Montant de la transaction")
+pay_cmd.add_argument('-c', '--comment',  default="", help="Commentaire de la transaction")
+pay_cmd.add_argument('-m', '--mempool', action='store_true', help="Utilise les sources en Mempool")
+pay_cmd.add_argument('-v', '--verbose', action='store_true', help="Affiche le résultat JSON de la transaction")
+
+history_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
+history_cmd.add_argument('-j', '--json',  action='store_true', help="Affiche le résultat en format JSON")
+history_cmd.add_argument('--nocolors',  action='store_true', help="Affiche le résultat en noir et blanc")
+
+balance_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
+balance_cmd.add_argument('-m', '--mempool', action='store_true', help="Utilise les sources en Mempool")
+
+
 args = parser.parse_args()
 cmd = args.cmd
-
-if not cmd:
-    parser.print_help()
-    sys.exit(1)
 
 if args.version:
   print(__version__)
   sys.exit(0)
+
+if not cmd:
+    parser.print_help()
+    sys.exit(1)
 
 def createTmpDunikey():
     # Generate pseudo-random nonce
@@ -87,13 +106,6 @@ def createTmpDunikey():
     key.save_pubsec_file(keyPath)
     
     return keyPath
-
-if args.node:
-    pod = args.node
-else:
-    pod = os.getenv('POD')
-if not pod:
-    pod="https://g1.data.le-sou.org"
 
 if args.key:
     dunikey = args.key
@@ -114,48 +126,79 @@ if not os.path.isfile(dunikey):
 
 
 # Construct CesiumPlus object
-cesium = CesiumPlus(dunikey, pod)
-
-# Messaging
-if cmd == "read":
-    cesium.read(args.number, args.outbox, args.json)
-elif cmd == "send":
-    if args.fichier:
-        with open(args.fichier, 'r') as f:
-            msgT = f.read()
-            titre = msgT.splitlines(True)[0].replace('\n', '')
-            msg = ''.join(msgT.splitlines(True)[1:])
-            if args.titre:
-                titre = args.titre
-                msg = msgT
-    elif args.titre and args.message:
-        titre = args.titre
-        msg = args.message
+if cmd in ("read","send","delete","set","get","erase","like","unlike"):
+    if args.node:
+        pod = args.node
     else:
-        titre = input("Indiquez le titre du message: ")
-        msg = input("Indiquez le contenu du message: ")
+        pod = os.getenv('POD')
+    if not pod:
+        pod="https://g1.data.le-sou.org"
 
-    cesium.send(titre, msg, args.destinataire, args.outbox)
+    cesium = CesiumPlus(dunikey, pod)
 
-elif cmd == "delete":
-    cesium.delete(args.id[0], args.outbox)
+    # Messaging
+    if cmd == "read":
+        cesium.read(args.number, args.outbox, args.json)
+    elif cmd == "send":
+        if args.fichier:
+            with open(args.fichier, 'r') as f:
+                msgT = f.read()
+                titre = msgT.splitlines(True)[0].replace('\n', '')
+                msg = ''.join(msgT.splitlines(True)[1:])
+                if args.titre:
+                    titre = args.titre
+                    msg = msgT
+        elif args.titre and args.message:
+            titre = args.titre
+            msg = args.message
+        else:
+            titre = input("Indiquez le titre du message: ")
+            msg = input("Indiquez le contenu du message: ")
 
-# Profiles
-elif cmd == "set":
-    cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site, args.avatar)
-elif cmd == "get":
-    cesium.get(args.profile, args.avatar)
-elif cmd == "erase":
-    cesium.erase()
+        cesium.send(titre, msg, args.destinataire, args.outbox)
 
-# Likes
-elif cmd == "like":
-    if args.stars or args.stars == 0:
-        cesium.like(args.stars, args.profile)
+    elif cmd == "delete":
+        cesium.delete(args.id[0], args.outbox)
+
+    # Profiles
+    elif cmd == "set":
+        cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site, args.avatar)
+    elif cmd == "get":
+        cesium.get(args.profile, args.avatar)
+    elif cmd == "erase":
+        cesium.erase()
+
+    # Likes
+    elif cmd == "like":
+        if args.stars or args.stars == 0:
+            cesium.like(args.stars, args.profile)
+        else:
+            cesium.readLikes(args.profile)
+    elif cmd == "unlike":
+        cesium.unLike(args.profile)
+
+# Construct GVA object
+elif cmd in ("pay","history","balance"):
+    if args.node:
+        node = args.node
     else:
-        cesium.readLikes(args.profile)
-elif cmd == "unlike":
-    cesium.unLike(args.profile)
+        node = os.getenv('NODE')
+    if not node:
+        node="https://g1.librelois.fr/gva"
+
+    if args.pubkey:
+        destPubkey = args.pubkey
+    else:
+        destPubkey = False
+
+    gva = GvaApi(dunikey, node, destPubkey)
+
+    if cmd == "pay":
+        gva.pay(args.amount, args.comment, args.mempool, args.verbose)
+    if cmd == "history":
+        gva.history(args.json, args.nocolors)
+    if cmd == "balance":
+        gva.balance(args.mempool)
 
 
 if keyPath:
