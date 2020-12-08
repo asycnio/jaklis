@@ -4,3 +4,4 @@ pybase64
 duniterpy
 termcolor
 python-dotenv
+gql
