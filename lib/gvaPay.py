@@ -162,3 +162,11 @@ class Transaction:
         self._isChange = newChange
         if newChange: self.useMempool == True
     isChange = property(_getIsChange, _setIsChange)
+
+    def send(self):
+        result = self.genDoc()
+        result = self.checkTXDoc()
+        result = self.signDoc()
+        result = self.sendTXDoc()
+        return result
+
