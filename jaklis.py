@@ -5,8 +5,6 @@ from os.path import join, dirname
 from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
-from lib.cesium import CesiumPlus
-from lib.gva import GvaApi
 
 __version__ = "0.0.2"
 
@@ -107,6 +105,9 @@ def createTmpDunikey():
     
     return keyPath
 
+# if not cmd in ('history','balance','get') and args.profile:
+#     print('pubpass')
+
 if args.key:
     dunikey = args.key
     keyPath = False
@@ -127,6 +128,7 @@ if not os.path.isfile(dunikey):
 
 # Construct CesiumPlus object
 if cmd in ("read","send","delete","set","get","erase","like","unlike"):
+    from lib.cesium import CesiumPlus
     if args.node:
         pod = args.node
     else:
@@ -179,6 +181,8 @@ if cmd in ("read","send","delete","set","get","erase","like","unlike"):
 
 # Construct GVA object
 elif cmd in ("pay","history","balance"):
+    from lib.gva import GvaApi
+
     if args.node:
         node = args.node
     else:
