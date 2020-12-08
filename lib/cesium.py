@@ -48,7 +48,7 @@ class CesiumPlus(CesiumCommon):
         return result
     
     def get(self, profile=None, avatar=None):
-        getProfile = Profiles(self.dunikey,  self.pod)
+        getProfile = Profiles(self.dunikey,  self.pod, self.noNeedDunikey)
         if not profile:
             profile = self.pubkey
         if not re.match(PUBKEY_REGEX, profile) or len(profile) > 45:
@@ -72,7 +72,7 @@ class CesiumPlus(CesiumCommon):
     #################### Likes ####################
 
     def readLikes(self, profile=False):
-        likes = ReadLikes(self.dunikey,  self.pod)
+        likes = ReadLikes(self.dunikey,  self.pod, self.noNeedDunikey)
         document = likes.configDoc(profile)
         result = likes.sendDocument(document)
         result = likes.parseResult(result)

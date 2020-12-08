@@ -105,30 +105,47 @@ def createTmpDunikey():
     
     return keyPath
 
-# if not cmd in ('history','balance','get') and args.profile:
-#     print('pubpass')
+# Check if we need dunikey
+try:
+    pubkey = args.pubkey
+except:
+    pubkey = False
+try:
+    profile = args.profile
+except:
+    profile = False
 
-if args.key:
-    dunikey = args.key
+if cmd in ('history','balance','get') and (pubkey or profile):
+    noNeedDunikey = True
     keyPath = False
+    try:
+        dunikey = args.pubkey
+    except:
+        dunikey = args.profile
 else:
-    dunikey = os.getenv('DUNIKEY')
-    if not dunikey:
-        keyPath = createTmpDunikey()
-        dunikey = keyPath
-    else:
+    noNeedDunikey = False
+    if args.key:
+        dunikey = args.key
         keyPath = False
-if not os.path.isfile(dunikey):
-    HOME = os.getenv("HOME")
-    dunikey = HOME + dunikey
+    else:
+        dunikey = os.getenv('DUNIKEY')
+        if not dunikey:
+            keyPath = createTmpDunikey()
+            dunikey = keyPath
+        else:
+            keyPath = False
     if not os.path.isfile(dunikey):
-        sys.stderr.write('Le fichier de trousseau {0} est introuvable.\n'.format(dunikey))
-        sys.exit(1)
+        HOME = os.getenv("HOME")
+        dunikey = HOME + dunikey
+        if not os.path.isfile(dunikey):
+            sys.stderr.write('Le fichier de trousseau {0} est introuvable.\n'.format(dunikey))
+            sys.exit(1)
 
 
 # Construct CesiumPlus object
 if cmd in ("read","send","delete","set","get","erase","like","unlike"):
     from lib.cesium import CesiumPlus
+
     if args.node:
         pod = args.node
     else:
@@ -136,7 +153,7 @@ if cmd in ("read","send","delete","set","get","erase","like","unlike"):
     if not pod:
         pod="https://g1.data.le-sou.org"
 
-    cesium = CesiumPlus(dunikey, pod)
+    cesium = CesiumPlus(dunikey, pod, noNeedDunikey)
 
     # Messaging
     if cmd == "read":
@@ -195,7 +212,7 @@ elif cmd in ("pay","history","balance"):
     else:
         destPubkey = False
 
-    gva = GvaApi(dunikey, node, destPubkey)
+    gva = GvaApi(dunikey, node, destPubkey, noNeedDunikey)
 
     if cmd == "pay":
         gva.pay(args.amount, args.comment, args.mempool, args.verbose)

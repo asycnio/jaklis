@@ -5,10 +5,15 @@ from lib.gvaHistory import History
 from lib.gvaBalance import Balance
 
 class GvaApi():
-    def __init__(self, dunikey, node, pubkey):
+    def __init__(self, dunikey, node, pubkey, noNeedDunikey=False):
+        self.noNeedDunikey = noNeedDunikey
         self.dunikey = dunikey
         self.node = node
-        self.pubkey = get_privkey(dunikey, "pubsec").pubkey
+        if noNeedDunikey:
+            self.pubkey = self.dunikey
+        else:
+            self.pubkey = get_privkey(dunikey, "pubsec").pubkey
+
         if pubkey:
             self.destPubkey = pubkey
         else:

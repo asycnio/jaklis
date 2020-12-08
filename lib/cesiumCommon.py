@@ -13,7 +13,9 @@ def pp_json(json_thing, sort=True, indents=4):
     return None
 
 class CesiumCommon:
-    def __init__(self, dunikey, pod):
+    def __init__(self, dunikey, pod, noNeedDunikey=False):
+        self.pod = pod
+        self.noNeedDunikey = noNeedDunikey
         # Get my pubkey from my private key
         try:
             self.dunikey = dunikey
@@ -23,8 +25,10 @@ class CesiumCommon:
             sys.stderr.write("Please fill the path to your private key (PubSec)\n")
             sys.exit(1)
 
-        self.pubkey = get_privkey(dunikey, "pubsec").pubkey
-        self.pod = pod
+        if noNeedDunikey:
+            self.pubkey = self.dunikey
+        else:
+            self.pubkey = get_privkey(dunikey, "pubsec").pubkey
 
         if not re.match(PUBKEY_REGEX, self.pubkey) or len(self.pubkey) > 45:
             sys.stderr.write("La clé publique n'est pas au bon format.\n")
