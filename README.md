@@ -20,10 +20,18 @@ Renseignez optionnellement le fichier **.env** (Généré lors de la première t
 ```
 
 ```
-usage: jaklis.py [-h] [-v] [-k KEY] [-n NODE] {read,send,delete,get,set,erase,like,unlike} ...
+usage: jaklis.py [-h] [-v] [-k KEY] [-n NODE] {read,send,delete,get,set,erase,like,unlike,pay,history,balance} ...
 
-positional arguments:
-  {read,send,delete,get,set,erase,like,unlike}
+Client CLI pour Cesium+ et Ḡchange
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --version         Affiche la version actuelle du programme
+  -k KEY, --key KEY     Chemin vers mon trousseau de clé (PubSec)
+  -n NODE, --node NODE  Adresse du noeud Cesium+, Gchange ou Duniter à utiliser
+
+Commandes de jaklis:
+  {read,send,delete,get,set,erase,like,unlike,pay,history,balance}
     read                Lecture des messages
     send                Envoi d'un message
     delete              Supression d'un message
@@ -32,12 +40,10 @@ positional arguments:
     erase               Effacer son profile Cesium+
     like                Voir les likes d'un profile / Liker un profile (option -s NOTE)
     unlike              Supprimer un like
+    pay                 Payer en Ḡ1
+    history             Voir l'historique des transactions d'un compte Ḡ1
+    balance             Voir le solde d'un compte Ḡ1
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -v, --version         Affiche la version actuelle du programme
-  -k KEY, --key KEY     Chemin vers mon trousseau de clé (PubSec)
-  -n NODE, --node NODE  Adresse du noeud Cesium+ ou Gchange à utiliser
 ```
 
 Utilisez `./jaklis CMD -h` où `CMD` est la commande souhaité pour obtenir l'aide détaillé de cette commande.
