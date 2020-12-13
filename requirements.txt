@@ -5,3 +5,4 @@ duniterpy
 termcolor
 python-dotenv
 gql
+requests
