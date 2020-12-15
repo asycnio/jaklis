@@ -29,8 +29,8 @@ delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
 getProfile_cmd = subparsers.add_parser('get', help="Voir un profile Cesium+")
 setProfile_cmd = subparsers.add_parser('set', help="Configurer son profile Cesium+")
 eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesium+")
-like_cmd = subparsers.add_parser('like', help="Voir les likes d'un profile / Liker un profile (option -s NOTE)")
-unlike_cmd = subparsers.add_parser('unlike', help="Supprimer un like")
+stars_cmd = subparsers.add_parser('stars', help="Voir les étoiles d'un profile / Noter un profile (option -s NOTE)")
+unstars_cmd = subparsers.add_parser('unstars', help="Supprimer un star")
 pay_cmd = subparsers.add_parser('pay', help="Payer en Ḡ1")
 history_cmd = subparsers.add_parser('history', help="Voir l'historique des transactions d'un compte Ḡ1")
 balance_cmd = subparsers.add_parser('balance', help="Voir le solde d'un compte Ḡ1")
@@ -62,9 +62,9 @@ getProfile_cmd.add_argument('-p', '--profile', help="Nom du profile")
 getProfile_cmd.add_argument('-a', '--avatar', action='store_true', help="Récupérer également l'avatar au format raw base64")
 
 # Likes management
-like_cmd.add_argument('-p', '--profile', help="Profile cible")
-like_cmd.add_argument('-s', '--stars', type=int, help="Nombre d'étoile")
-unlike_cmd.add_argument('-p', '--profile', help="Profile à déliker")
+stars_cmd.add_argument('-p', '--profile', help="Profile cible")
+stars_cmd.add_argument('-n', '--number', type=int, help="Nombre d'étoile")
+unstars_cmd.add_argument('-p', '--profile', help="Profile à dénoter")
 
 # GVA usage
 pay_cmd.add_argument('-p', '--pubkey', help="Destinataire du paiement")
@@ -143,7 +143,7 @@ else:
 
 
 # Construct CesiumPlus object
-if cmd in ("read","send","delete","set","get","erase","like","unlike"):
+if cmd in ("read","send","delete","set","get","erase","stars","unstars"):
     from lib.cesium import CesiumPlus
 
     if args.node:
@@ -187,13 +187,13 @@ if cmd in ("read","send","delete","set","get","erase","like","unlike"):
     elif cmd == "erase":
         cesium.erase()
 
-    # Likes
-    elif cmd == "like":
-        if args.stars or args.stars == 0:
-            cesium.like(args.stars, args.profile)
+    # Stars
+    elif cmd == "stars":
+        if args.number or args.number == 0:
+            cesium.like(args.number, args.profile)
         else:
             cesium.readLikes(args.profile)
-    elif cmd == "unlike":
+    elif cmd == "unstars":
         cesium.unLike(args.profile)
 
 # Construct GVA object
