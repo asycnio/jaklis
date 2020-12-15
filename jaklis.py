@@ -74,6 +74,7 @@ pay_cmd.add_argument('-m', '--mempool', action='store_true', help="Utilise les s
 pay_cmd.add_argument('-v', '--verbose', action='store_true', help="Affiche le résultat JSON de la transaction")
 
 history_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
+history_cmd.add_argument('-n', '--number',type=int, default=10, help="Affiche les NUMBER dernières transactions")
 history_cmd.add_argument('-j', '--json',  action='store_true', help="Affiche le résultat en format JSON")
 history_cmd.add_argument('--nocolors',  action='store_true', help="Affiche le résultat en noir et blanc")
 
@@ -217,7 +218,7 @@ elif cmd in ("pay","history","balance"):
     if cmd == "pay":
         gva.pay(args.amount, args.comment, args.mempool, args.verbose)
     if cmd == "history":
-        gva.history(args.json, args.nocolors)
+        gva.history(args.json, args.nocolors, args.number)
     if cmd == "balance":
         gva.balance(args.mempool)
 

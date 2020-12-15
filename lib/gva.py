@@ -42,9 +42,9 @@ class GvaApi():
         gva.signDoc()
         return gva.sendTXDoc()
 
-    def history(self, isJSON=False, noColors=False):
+    def history(self, isJSON=False, noColors=False, number=10):
         gva = History(self.dunikey, self.node, self.destPubkey)
-        gva.sendDoc()
+        gva.sendDoc(number)
         transList = gva.parseHistory()
 
         if isJSON:

@@ -23,14 +23,14 @@ class History:
         transport = AIOHTTPTransport(url=node)
         self.client = Client(transport=transport, fetch_schema_from_transport=True)
 
-    def sendDoc(self):
+    def sendDoc(self, number):
         # Build history generation document
         queryBuild = gql(
             """
-            query ($pubkey: String!){
+            query ($pubkey: String!, $number: Int!){
                 txsHistoryBc(
                     pubkeyOrScript: $pubkey
-                    pagination: { pageSize: 10, ord: DESC }
+                    pagination: { pageSize: $number, ord: DESC }
                 ) {
                     both {
                         pageInfo {
@@ -57,6 +57,13 @@ class History:
                         outputs
                         writtenTime
                     }
+                    receiving {
+                        currency
+                        issuers
+                        comment
+                        outputs
+                        writtenTime
+                    }
                 }
                 balance(script: $pubkey) {
                     amount
@@ -75,7 +82,8 @@ class History:
         """
         )
         paramsBuild = {
-            "pubkey": self.pubkey
+            "pubkey": self.pubkey,
+            "number": number
         }
 
         # Send history document
@@ -95,18 +103,51 @@ class History:
         self.UD = self.historyDoc['currentUd']['amount']/100
 
 
-        resBc = self.historyDoc['txsHistoryBc']['both']['edges'][0]
-        for transaction in resBc:
-            direction = resBc['direction']
-            transaction = resBc['node']
+        # Parse transactions in blockchain
+        resBc = []
+        resBc = self.historyDoc['txsHistoryBc']['both']['edges']
+        for j, transaction in enumerate(resBc):
+            # print(transaction)
+            direction = resBc[j]['direction']
+            transaction = resBc[j]['node']
             output = transaction['outputs'][0]
             outPubkey = output.split("SIG(")[1].replace(')','')
-            if direction == 'RECEIVED' or self.pubkey != outPubkey:
+            # if direction == 'RECEIVED' or self.pubkey != outPubkey:
+            trans.append(i)
+            trans[i] = []
+            trans[i].append(direction)
+            trans[i].append(transaction['writtenTime'])
+            if direction == 'SENT':
+                trans[i].append(outPubkey)
+                amount = int('-' + output.split(':')[0])
+            else:
+                trans[i].append(transaction['issuers'][0])
+                amount = int(output.split(':')[0])
+            base = int(output.split(':')[1])
+            applyBase = base-currentBase
+            amount = round(amount*pow(10,applyBase)/100, 2)
+            # if referential == 'DU': amount = round(amount/UD, 2)
+            trans[i].append(amount)
+            trans[i].append(round(amount/self.UD, 2))
+            trans[i].append(transaction['comment'])
+            trans[i].append(base)
+            i += 1
+
+        # Parse transactions in mempool
+        for direction in self.historyDoc['txsHistoryMp']:
+            resBc = []
+            resBc = self.historyDoc['txsHistoryMp'][direction]
+            for j, transaction in enumerate(resBc):
+                # print(transaction)
+                transaction = resBc[j]
+                output = transaction['outputs'][0]
+                outPubkey = output.split("SIG(")[1].replace(')','')
+                # if direction == 'RECEIVING' or self.pubkey != outPubkey:
                 trans.append(i)
                 trans[i] = []
                 trans[i].append(direction)
-                trans[i].append(transaction['writtenTime'])
-                if direction == 'SENT':
+                trans[i].append(int(time.time()))
+                if direction == 'SENDING':
                     trans[i].append(outPubkey)
                     amount = int('-' + output.split(':')[0])
                 else:
@@ -157,13 +198,14 @@ class History:
         print(isBold + "|{: <19} | {: <12} | {: <7} | {: <7} | {: <30}".format("        Date","   De / À","  {0}".format(currency)," DU/{0}".format(currency.lower()),"Commentaire") + isBoldEnd)
         print('|', end='')
         for t in trans:
-            if t[0] == "received": color = "green"
+            if t[0] == "RECEIVED": color = "green"
+            elif t[0] == "SENT": color = "blue"
             elif t[0] == "receiving": color = "yellow"
             elif t[0] == "sending": color = "red"
-            else: color = "blue"
+            else: color = None
             if noColors:
                 color = None
-                if t[0] in ('receiving','sending'):
+                if t[0] in ('RECEIVING','SENDING'):
                     comment = '(EN ATTENTE) ' + t[5]
                 else:
                     comment = t[5]
