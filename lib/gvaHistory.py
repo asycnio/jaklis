@@ -28,28 +28,34 @@ class History:
         queryBuild = gql(
             """
             query ($pubkey: String!){
-                transactionsHistory(pubkey: $pubkey) {
-                    received {
+                txsHistoryBc(
+                    pubkeyOrScript: $pubkey
+                    pagination: { pageSize: 10, ord: DESC }
+                ) {
+                    both {
+                        pageInfo {
+                            hasPreviousPage
+                            hasNextPage
+                        }
+                        edges {
+                            direction
+                            node {
+                                currency
+                                issuers
+                                outputs
+                                comment
+                                writtenTime
+                            }
+                        }
+                    }
+                }
+                txsHistoryMp(pubkey: $pubkey) {
+                    receiving {
+                        currency
+                        issuers
+                        comment
+                        outputs
                         writtenTime
-                        issuers
-                        outputs
-                        comment
-                    }
-                    sent {
-                        writtenTime
-                        issuers
-                        outputs
-                        comment
-                    }
-                   receiving {
-                        issuers
-                        outputs
-                        comment
-                    }
-                    sending {
-                        issuers
-                        outputs
-                        comment
                     }
                 }
                 balance(script: $pubkey) {
@@ -88,34 +94,33 @@ class History:
         currentBase = int(self.historyDoc['currentUd']['base'])
         self.UD = self.historyDoc['currentUd']['amount']/100
 
-        for sens in 'received','sent','receiving','sending':
-            res = self.historyDoc['transactionsHistory'][sens]
-            for bloc in res:
-                output = bloc['outputs'][0]
-                outPubkey = output.split("SIG(")[1].replace(')','')
-                if sens in ('received','receiving') or self.pubkey != outPubkey:
-                    trans.append(i)
-                    trans[i] = []
-                    trans[i].append(sens)
-                    if sens in ('receiving','sending'):
-                        trans[i].append(int(time.time()))
-                    else:
-                        trans[i].append(bloc['writtenTime'])
-                    if sens in ('sent','sending'):
-                        trans[i].append(outPubkey)
-                        amount = int('-' + output.split(':')[0])
-                    else:
-                        trans[i].append(bloc['issuers'][0])
-                        amount = int(output.split(':')[0])
-                    base = int(output.split(':')[1])
-                    applyBase = base-currentBase
-                    amount = round(amount*pow(10,applyBase)/100, 2)
-                    # if referential == 'DU': amount = round(amount/UD, 2)
-                    trans[i].append(amount)
-                    trans[i].append(round(amount/self.UD, 2))
-                    trans[i].append(bloc['comment'])
-                    trans[i].append(base)
-                    i += 1
+
+        resBc = self.historyDoc['txsHistoryBc']['both']['edges'][0]
+        for transaction in resBc:
+            direction = resBc['direction']
+            transaction = resBc['node']
+            output = transaction['outputs'][0]
+            outPubkey = output.split("SIG(")[1].replace(')','')
+            if direction == 'RECEIVED' or self.pubkey != outPubkey:
+                trans.append(i)
+                trans[i] = []
+                trans[i].append(direction)
+                trans[i].append(transaction['writtenTime'])
+                if direction == 'SENT':
+                    trans[i].append(outPubkey)
+                    amount = int('-' + output.split(':')[0])
+                else:
+                    trans[i].append(transaction['issuers'][0])
+                    amount = int(output.split(':')[0])
+                base = int(output.split(':')[1])
+                applyBase = base-currentBase
+                amount = round(amount*pow(10,applyBase)/100, 2)
+                # if referential == 'DU': amount = round(amount/UD, 2)
+                trans[i].append(amount)
+                trans[i].append(round(amount/self.UD, 2))
+                trans[i].append(transaction['comment'])
+                trans[i].append(base)
+                i += 1
 
         # Order transactions by date
         trans.sort(key=lambda x: x[1])
