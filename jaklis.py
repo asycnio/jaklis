@@ -31,6 +31,9 @@ setProfile_cmd = subparsers.add_parser('set', help="Configurer son profile Cesiu
 eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesium+")
 stars_cmd = subparsers.add_parser('stars', help="Voir les étoiles d'un profile / Noter un profile (option -s NOTE)")
 unstars_cmd = subparsers.add_parser('unstars', help="Supprimer un star")
+getoffer_cmd = subparsers.add_parser('getoffer', help="Obtenir les informations d'une annonce gchange")
+setoffer_cmd = subparsers.add_parser('setoffer', help="Créer une annonce gchange")
+deleteoffer_cmd = subparsers.add_parser('deleteoffer', help="Supprimer une annonce gchange")
 pay_cmd = subparsers.add_parser('pay', help="Payer en Ḡ1")
 history_cmd = subparsers.add_parser('history', help="Voir l'historique des transactions d'un compte Ḡ1")
 balance_cmd = subparsers.add_parser('balance', help="Voir le solde d'un compte Ḡ1")
@@ -65,6 +68,17 @@ getProfile_cmd.add_argument('-a', '--avatar', action='store_true', help="Récup�
 stars_cmd.add_argument('-p', '--profile', help="Profile cible")
 stars_cmd.add_argument('-n', '--number', type=int, help="Nombre d'étoile")
 unstars_cmd.add_argument('-p', '--profile', help="Profile à dénoter")
+
+# Offers management
+getoffer_cmd.add_argument('-i', '--id', help="Annonce cible à récupérer")
+setoffer_cmd.add_argument('-t', '--title', help="Titre de l'annonce à créer")
+setoffer_cmd.add_argument('-d', '--description', help="Description de l'annonce à créer")
+setoffer_cmd.add_argument('-c', '--category', help="Categorie de l'annonce à créer")
+setoffer_cmd.add_argument('-l', '--localisation', nargs=2, help="Localisation de l'annonce à créer (lat + lon)")
+setoffer_cmd.add_argument('-p', '--picture', help="Image de l'annonce à créer")
+setoffer_cmd.add_argument('-ci', '--city', help="Ville de l'annonce à créer")
+setoffer_cmd.add_argument('-pr', '--price', help="Prix de l'annonce à créer")
+deleteoffer_cmd.add_argument('-i', '--id', help="Annonce cible à supprimer")
 
 # GVA usage
 pay_cmd.add_argument('-p', '--pubkey', help="Destinataire du paiement")
@@ -144,7 +158,7 @@ else:
 
 
 # Construct CesiumPlus object
-if cmd in ("read","send","delete","set","get","erase","stars","unstars"):
+if cmd in ("read","send","delete","set","get","erase","stars","unstars","getoffer","setoffer","deleteoffer"):
     from lib.cesium import CesiumPlus
 
     if args.node:
@@ -196,6 +210,14 @@ if cmd in ("read","send","delete","set","get","erase","stars","unstars"):
             cesium.readLikes(args.profile)
     elif cmd == "unstars":
         cesium.unLike(args.profile)
+
+    # Offers
+    elif cmd == "getoffer":
+        cesium.getOffer(args.id)
+    elif cmd == "setoffer":
+        cesium.setOffer(args.title, args.description, args.city, args.localisation, args.category, args.price, args.picture)
+    elif cmd == "deleteoffer":
+        cesium.deleteOffer(args.id)
 
 # Construct GVA object
 elif cmd in ("pay","history","balance"):

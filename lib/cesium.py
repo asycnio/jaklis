@@ -3,6 +3,7 @@ from lib.cesiumCommon import CesiumCommon, PUBKEY_REGEX
 from lib.messaging import ReadFromCesium, SendToCesium, DeleteFromCesium
 from lib.profiles import Profiles
 from lib.likes import ReadLikes, SendLikes, UnLikes
+from lib.offers import Offers
 
 class CesiumPlus(CesiumCommon):
 
@@ -91,3 +92,28 @@ class CesiumPlus(CesiumCommon):
         if idLike:
             document = likes.configDoc(idLike)
             likes.sendDocument(document, silent)
+
+    #################### Offer ####################
+
+    def setOffer(self, title=None, description=None, city=None, localisation=None, category=None, price=None, picture=None):
+        setOffer = Offers(self.dunikey,  self.pod)
+        document = setOffer.configDocSet(title, description, city, localisation, category, price, picture)
+        result = setOffer.sendDocumentSet(document,'set')
+
+        print(result)
+        return result
+    
+    def getOffer(self, id, avatar=None):
+        getOffer = Offers(self.dunikey,  self.pod, self.noNeedDunikey)
+
+        resultJSON = getOffer.sendDocumentGet(id, 'get')
+        result = getOffer.parseJSON(resultJSON)
+
+        print(result)
+
+    def deleteOffer(self, id):
+        eraseOffer = Offers(self.dunikey,  self.pod)
+        document = eraseOffer.configDocErase(id)
+        result = eraseOffer.sendDocumentSet(document,'delete', id)
+
+        print(result)
