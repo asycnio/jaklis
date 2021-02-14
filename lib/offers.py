@@ -21,9 +21,9 @@ class Offers(CesiumCommon):
         if picture:
             picture = open(picture, 'rb').read()
             picture = base64.b64encode(picture).decode()
-            data['picture'] = {}
-            data['picture']['_content'] = picture
-            data['picture']['_content_type'] = "image/png"
+            data['thumbnail'] = {}
+            data['thumbnail']['_content'] = picture
+            data['thumbnail']['_content_type'] = "image/png"
         # if category: data['category'] = category
         # else: 
         data['category'] = {"parent":"cat90","localizedNames":{"en":"Fruits &amp; Vegetables","es-ES":"Frutas y Vegetales","fr-FR":"Fruits &amp; Légumes"},"name":"Fruits &amp; Légumes","id":"cat92"}
@@ -38,7 +38,8 @@ class Offers(CesiumCommon):
         data['unit'] = None
         data['fees'] = None
         data['feesCurrency'] = None
-        data['picturesCount'] = 0
+        if picture: data['picturesCount'] = 1
+        else: data['picturesCount'] = 0
         data['stock'] = 1
         data['tags'] = []
 
