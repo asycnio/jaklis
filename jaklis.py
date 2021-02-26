@@ -133,7 +133,7 @@ try:
 except:
     profile = False
 
-if cmd in ('history','balance','get') and (pubkey or profile):
+if cmd in ('history','balance','get','id') and (pubkey or profile):
     noNeedDunikey = True
     keyPath = False
     try:
