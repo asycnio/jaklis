@@ -3,6 +3,7 @@ from lib.natools import get_privkey
 from lib.gvaPay import Transaction, PUBKEY_REGEX
 from lib.gvaHistory import History
 from lib.gvaBalance import Balance
+from lib.gvaID import Id
 
 class GvaApi():
     def __init__(self, dunikey, node, pubkey, noNeedDunikey=False):
@@ -57,3 +58,8 @@ class GvaApi():
         gva = Balance(self.dunikey, self.node, self.destPubkey, useMempool)
         balanceValue = gva.sendDoc()
         print(balanceValue)
+    
+    def id(self, pubkey, username):
+        gva = Id(self.dunikey, self.node, pubkey, username)
+        result = gva.sendDoc()
+        print(result)

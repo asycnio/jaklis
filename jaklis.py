@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 
 import argparse, sys, os, getpass, string, random
 from os.path import join, dirname
@@ -37,6 +37,7 @@ deleteoffer_cmd = subparsers.add_parser('deleteoffer', help="Supprimer une annon
 pay_cmd = subparsers.add_parser('pay', help="Payer en Ḡ1")
 history_cmd = subparsers.add_parser('history', help="Voir l'historique des transactions d'un compte Ḡ1")
 balance_cmd = subparsers.add_parser('balance', help="Voir le solde d'un compte Ḡ1")
+id_cmd = subparsers.add_parser('id', help="Voir l'identité d'une clé publique/username")
 
 # Messages management
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
@@ -94,6 +95,8 @@ history_cmd.add_argument('--nocolors',  action='store_true', help="Affiche le r�
 
 balance_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
 balance_cmd.add_argument('-m', '--mempool', action='store_true', help="Utilise les sources en Mempool")
+id_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
+id_cmd.add_argument('-u', '--username', help="Username du compte visé")
 
 
 args = parser.parse_args()
@@ -220,7 +223,7 @@ if cmd in ("read","send","delete","set","get","erase","stars","unstars","getoffe
         cesium.deleteOffer(args.id)
 
 # Construct GVA object
-elif cmd in ("pay","history","balance"):
+elif cmd in ("pay","history","balance","id"):
     from lib.gva import GvaApi
 
     if args.node:
@@ -239,10 +242,12 @@ elif cmd in ("pay","history","balance"):
 
     if cmd == "pay":
         gva.pay(args.amount, args.comment, args.mempool, args.verbose)
-    if cmd == "history":
+    elif cmd == "history":
         gva.history(args.json, args.nocolors, args.number)
-    if cmd == "balance":
+    elif cmd == "balance":
         gva.balance(args.mempool)
+    elif cmd == "id":
+        gva.id(args.pubkey, args.username)
 
 
 if keyPath:

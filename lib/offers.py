@@ -94,11 +94,13 @@ class Offers(CesiumCommon):
         if type == 'set':
             reqQuery = '{0}/market/record'.format(self.pod)
         elif type == 'get':
-            reqQuery = '{0}/market/record/{1}?_source=category,title,description,issuer,time,creationTime,location,address,city,price,unit,currency,thumbnail._content_type,picturesCount,type,stock,fees,feesCurrency,geoPoint,pubkey,freePrice'.format(self.pod, id)
+            reqQuery = '{0}/market/record/{1}?_source=category,title,description,issuer,time,creationTime,location,address,city,price,unit,currency,thumbnail._content_type,thumbnail._content,picturesCount,type,stock,fees,feesCurrency,geoPoint,pubkey,freePrice'.format(self.pod, id)
         elif type == 'erase':
             reqQuery = '{0}/market/delete'.format(self.pod)
+            
 
         result = requests.get(reqQuery, headers=headers)
+        # print(result)
         if result.status_code == 200:
             # print(result.text)
             return result.text

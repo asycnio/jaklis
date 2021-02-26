@@ -100,13 +100,14 @@ class CesiumPlus(CesiumCommon):
         document = setOffer.configDocSet(title, description, city, localisation, category, price, picture)
         result = setOffer.sendDocumentSet(document,'set')
 
-        print(result)
+        # print(result)
         return result
     
     def getOffer(self, id, avatar=None):
         getOffer = Offers(self.dunikey,  self.pod, self.noNeedDunikey)
-
+        
         resultJSON = getOffer.sendDocumentGet(id, 'get')
+        # print(resultJSON)
         result = getOffer.parseJSON(resultJSON)
 
         print(result)
