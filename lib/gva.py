@@ -63,3 +63,8 @@ class GvaApi():
         gva = Id(self.dunikey, self.node, pubkey, username)
         result = gva.sendDoc()
         print(result)
+
+    def idBalance(self, pubkey):
+            gva = Id(self.dunikey, self.node, pubkey)
+            result = gva.sendDoc(True)
+            print(result)

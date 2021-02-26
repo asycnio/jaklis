@@ -38,6 +38,7 @@ pay_cmd = subparsers.add_parser('pay', help="Payer en Ḡ1")
 history_cmd = subparsers.add_parser('history', help="Voir l'historique des transactions d'un compte Ḡ1")
 balance_cmd = subparsers.add_parser('balance', help="Voir le solde d'un compte Ḡ1")
 id_cmd = subparsers.add_parser('id', help="Voir l'identité d'une clé publique/username")
+id_balance_cmd = subparsers.add_parser('idBalance', help="Voir l'identité d'une clé publique/username et son solde")
 
 # Messages management
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
@@ -97,6 +98,7 @@ balance_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
 balance_cmd.add_argument('-m', '--mempool', action='store_true', help="Utilise les sources en Mempool")
 id_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
 id_cmd.add_argument('-u', '--username', help="Username du compte visé")
+id_balance_cmd.add_argument('-p', '--pubkey', help="Pubkey du compte visé")
 
 
 args = parser.parse_args()
@@ -133,7 +135,7 @@ try:
 except:
     profile = False
 
-if cmd in ('history','balance','get','id') and (pubkey or profile):
+if cmd in ('history','balance','get','id','idBalance') and (pubkey or profile):
     noNeedDunikey = True
     keyPath = False
     try:
@@ -223,7 +225,7 @@ if cmd in ("read","send","delete","set","get","erase","stars","unstars","getoffe
         cesium.deleteOffer(args.id)
 
 # Construct GVA object
-elif cmd in ("pay","history","balance","id"):
+elif cmd in ("pay","history","balance","id","idBalance"):
     from lib.gva import GvaApi
 
     if args.node:
@@ -248,6 +250,8 @@ elif cmd in ("pay","history","balance","id"):
         gva.balance(args.mempool)
     elif cmd == "id":
         gva.id(args.pubkey, args.username)
+    elif cmd == "idBalance":
+        gva.idBalance(args.pubkey)
 
 
 if keyPath:

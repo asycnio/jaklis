@@ -23,18 +23,34 @@ class Id:
         transport = AIOHTTPTransport(url=node)
         self.client = Client(transport=transport, fetch_schema_from_transport=True)
 
-    def sendDoc(self):
+    def sendDoc(self, getBalance=False):
         # Build balance generation document
-        queryBuild = gql(
-            """
-            query ($pubkey: String!){
-                idty (pubkey: $pubkey) {
-                    isMember
-                    username
+        if (getBalance):
+            queryBuild = gql(
+                """
+                query ($pubkey: String!){
+                    idty (pubkey: $pubkey) {
+                        isMember
+                        username
+                    }
+                    balance(script: $pubkey) {
+                    amount
                 }
-            }
-        """
-        )
+                }
+            """
+            )
+        else:
+            queryBuild = gql(
+                """
+                query ($pubkey: String!){
+                    idty (pubkey: $pubkey) {
+                        isMember
+                        username
+                    }
+                }
+            """
+            )
+        
         paramsBuild = {
             "pubkey": self.pubkey
         }
@@ -48,6 +64,8 @@ class Id:
             sys.exit(1)
 
         jsonBrut = IDResult['idty']
+        if (getBalance):
+            jsonBrut['balance'] = IDResult['balance']['amount']/100
         username = IDResult['idty']['username']
         isMember = IDResult['idty']['isMember']
 
