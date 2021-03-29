@@ -27,9 +27,9 @@ class History:
         # Build history generation document
         queryBuild = gql(
             """
-            query ($pubkey: String!, $number: Int!){
+            query ($pubkey: PubKeyGva!, $script: PkOrScriptGva!, $number: Int!){
                 txsHistoryBc(
-                    pubkeyOrScript: $pubkey
+                    script: $script
                     pagination: { pageSize: $number, ord: DESC }
                 ) {
                     both {
@@ -65,7 +65,7 @@ class History:
                         writtenTime
                     }
                 }
-                balance(script: $pubkey) {
+                balance(script: $script) {
                     amount
                     base
                 }
@@ -83,7 +83,8 @@ class History:
         )
         paramsBuild = {
             "pubkey": self.pubkey,
-            "number": number
+            "number": number,
+            "script": f"SIG({self.pubkey})",
         }
 
         # Send history document

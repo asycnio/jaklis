@@ -4,5 +4,5 @@ pybase64
 duniterpy==0.58.1
 termcolor
 python-dotenv
-gql==3.0.0a1
+gql==3.0.0a5
 requests

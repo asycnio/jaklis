@@ -11,13 +11,13 @@ PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 class Id:
 
     def __init__(self, dunikey, node, pubkey='', username=''):
+       
         self.dunikey = dunikey
         self.pubkey = pubkey if pubkey else get_privkey(dunikey, "pubsec").pubkey
-        self.pubkey = pubkey
         self.username = username
-        if not re.match(PUBKEY_REGEX, self.pubkey) or len(self.pubkey) > 45:
-            sys.stderr.write("La clé publique n'est pas au bon format.\n")
-            sys.exit(1)
+        # if not re.match(PUBKEY_REGEX, self.pubkey) or len(self.pubkey) > 45:
+        #     sys.stderr.write("La clé publique n'est pas au bon format.\n")
+        #     sys.exit(1)
 
         # Define Duniter GVA node
         transport = AIOHTTPTransport(url=node)
@@ -28,14 +28,14 @@ class Id:
         if (getBalance):
             queryBuild = gql(
                 """
-                query ($pubkey: String!){
+                query ($pubkey: PubKeyGva!, $script: PkOrScriptGva!){
                     idty (pubkey: $pubkey) {
                         isMember
                         username
                     }
-                    balance(script: $pubkey) {
+                    balance(script: $script) {
                     amount
-                }
+                    }
                 }
             """
             )
@@ -52,21 +52,30 @@ class Id:
             )
         
         paramsBuild = {
-            "pubkey": self.pubkey
+            "pubkey": self.pubkey,
+            "script": f"SIG({self.pubkey})"
         }
 
         # Send balance document
         try:
-            IDResult = self.client.execute(queryBuild, variable_values=paramsBuild)
+            queryResult = self.client.execute(queryBuild, variable_values=paramsBuild)
         except Exception as e:
-            message = ast.literal_eval(str(e))["message"]
-            sys.stderr.write("Echec de récupération du solde:\n" + message + "\n")
+            sys.stderr.write("Echec de récupération du solde:\n" + str(e) + "\n")
             sys.exit(1)
 
-        jsonBrut = IDResult['idty']
-        if (getBalance):
-            jsonBrut['balance'] = IDResult['balance']['amount']/100
-        username = IDResult['idty']['username']
-        isMember = IDResult['idty']['isMember']
+        jsonBrut = queryResult
+        
+        if (getBalance):            
+            if (queryResult['balance'] == None):
+                jsonBrut['balance'] = {"amount": 0.0}
+            else:
+                jsonBrut['balance'] = queryResult['balance']['amount']/100
+                
+        if (queryResult['idty'] == None):
+            username = 'Matiou'
+            isMember = False
+        else:
+            username = queryResult['idty']['username']
+            isMember = queryResult['idty']['isMember']
 
         return json.dumps(jsonBrut, indent=2)
