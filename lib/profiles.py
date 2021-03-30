@@ -68,7 +68,7 @@ class Profiles(CesiumCommon):
                     }
                 },"from":0,
                 "size":100,
-                "_source":["title", avatar,"description","city","address","socials.url","creationTime","membersCount","type"],
+                "_source":["title", avatar,"description","city","address","socials.url","creationTime","membersCount","type","geoPoint"],
                 "indices_boost":{"user":100,"page":1,"group":0.01
                 }
         }

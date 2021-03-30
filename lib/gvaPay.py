@@ -6,7 +6,7 @@ from lib.natools import fmt, sign, get_privkey
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
-PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
+PUBKEY_REGEX = "(?![OIl])[0-9A-Za-z]{42,45}"
 
 class Transaction:
 
