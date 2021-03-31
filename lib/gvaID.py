@@ -42,7 +42,7 @@ class Id:
         else:
             queryBuild = gql(
                 """
-                query ($pubkey: String!){
+                query ($pubkey: PubKeyGva!){
                     idty (pubkey: $pubkey) {
                         isMember
                         username
