@@ -22,7 +22,7 @@ Renseignez optionnellement le fichier **.env** (Généré lors de la première t
 ```
 
 ```
-usage: jaklis.py [-h] [-v] [-k KEY] [-n NODE] {read,send,delete,get,set,erase,like,unlike,pay,history,balance} ...
+usage: jaklis.py [-h] [-v] [-k KEY] [-n NODE] {read,send,delete,get,set,erase,stars,unstars,getoffer,setoffer,deleteoffer,pay,history,balance,id,idBalance} ...
 
 Client CLI pour Cesium+ et Ḡchange
 
@@ -33,19 +33,23 @@ optional arguments:
   -n NODE, --node NODE  Adresse du noeud Cesium+, Gchange ou Duniter à utiliser
 
 Commandes de jaklis:
-  {read,send,delete,get,set,erase,like,unlike,pay,history,balance}
+  {read,send,delete,get,set,erase,stars,unstars,getoffer,setoffer,deleteoffer,pay,history,balance,id,idBalance}
     read                Lecture des messages
     send                Envoi d'un message
     delete              Supression d'un message
     get                 Voir un profile Cesium+
     set                 Configurer son profile Cesium+
     erase               Effacer son profile Cesium+
-    like                Voir les likes d'un profile / Liker un profile (option -s NOTE)
-    unlike              Supprimer un like
+    stars               Voir les étoiles d'un profile / Noter un profile (option -s NOTE)
+    unstars             Supprimer un star
+    getoffer            Obtenir les informations d'une annonce gchange
+    setoffer            Créer une annonce gchange
+    deleteoffer         Supprimer une annonce gchange
     pay                 Payer en Ḡ1
     history             Voir l'historique des transactions d'un compte Ḡ1
     balance             Voir le solde d'un compte Ḡ1
-
+    id                  Voir l'identité d'une clé publique/username
+    idBalance           Voir l'identité d'une clé publique/username et son solde
 ```
 
 Utilisez `./jaklis CMD -h` où `CMD` est la commande souhaité pour obtenir l'aide détaillé de cette commande.
