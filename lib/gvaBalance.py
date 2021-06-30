@@ -26,7 +26,7 @@ class Balance:
         # Build balance generation document
         queryBuild = gql(
             """
-            query ($pubkey: String!){
+            query ($pubkey: PkOrScriptGva!){
                 balance(script: $pubkey) {
                     amount
                 }

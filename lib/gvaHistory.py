@@ -55,14 +55,14 @@ class History:
                         issuers
                         comment
                         outputs
-                        writtenTime
+                        receivedTime
                     }
                     receiving {
                         currency
                         issuers
                         comment
                         outputs
-                        writtenTime
+                        receivedTime
                     }
                 }
                 balance(script: $script) {
