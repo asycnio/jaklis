@@ -2,7 +2,7 @@ import re, string, random, base64
 from lib.cesiumCommon import CesiumCommon, PUBKEY_REGEX
 from lib.messaging import ReadFromCesium, SendToCesium, DeleteFromCesium
 from lib.profiles import Profiles
-from lib.likes import ReadLikes, SendLikes, UnLikes
+from lib.stars import ReadLikes, SendLikes, UnLikes
 from lib.offers import Offers
 
 class CesiumPlus(CesiumCommon):
