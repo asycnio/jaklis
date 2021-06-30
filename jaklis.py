@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.7
 
 import argparse, sys, os, getpass, string, random
 from os.path import join, dirname
