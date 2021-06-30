@@ -6,7 +6,7 @@ from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 MY_PATH = os.path.realpath(os.path.dirname(sys.argv[0])) + '/'
 

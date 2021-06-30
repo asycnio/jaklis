@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import sys, re, os.path, json, ast, time
+import sys, re, os.path, json, ast, time, hashlib
 from datetime import datetime
+from duniterpy.key import base58
 from termcolor import colored
 from lib.natools import fmt, sign, get_privkey
 from gql import gql, Client
@@ -221,11 +222,12 @@ class History:
                 print('|', end='')
                 print('-'.center(rows-1, '-'))
             print('|', end='')
-            printKey = t[2][0:8] + '\u2026' + t[2][-3:]
+            checksum = self.gen_checksum(t[2])
+            shortPubkey = t[2][0:4] + '\u2026' + t[2][-4:] + ':' + checksum
             if noColors:
-                print(" {: <18} | {: <12} | {: <7} | {: <7} | {: <30}".format(date, printKey, t[3], t[4], comment))
+                print(" {: <18} | {: <12} | {: <7} | {: <7} | {: <30}".format(date, shortPubkey, t[3], t[4], comment))
             else:
-                print(colored(" {: <18} | {: <12} | {: <7} | {: <7} | {: <30}".format(date, printKey, t[3], t[4], comment), color))
+                print(colored(" {: <18} | {: <12} | {: <7} | {: <7} | {: <30}".format(date, shortPubkey, t[3], t[4], comment), color))
             print('|', end='')
         print('-'.center(rows-1, '-'))
         print('|', end='')
@@ -236,6 +238,15 @@ class History:
             print(colored('Reçus', 'green'), '-', colored('En cours de réception', 'yellow'), '-', colored('Envoyé', 'blue'), '-', colored("En cours d'envoi", 'red'))
 
         return trans
+    
+    def gen_checksum(self, pubkey):
+        """
+        Returns the checksum of the input pubkey (encoded in b58)
+        thx Matograine
+        """
+        pubkey_byte = base58.Base58Encoder.decode(str.encode(pubkey))
+        hash = hashlib.sha256(hashlib.sha256(pubkey_byte).digest()).digest()
+        return base58.Base58Encoder.encode(hash)[:3]
 
     def jsonHistory(self, transList):
         dailyJSON = []
