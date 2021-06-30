@@ -178,8 +178,12 @@ class History:
 
     def printHistory(self, trans, noColors):
         # Get balance
-        balance = self.historyDoc['balance']['amount']/100
-        balanceUD = round(balance/self.UD, 2)
+        if (self.historyDoc['balance'] == None): 
+            balance = balanceUD = 'null'
+        else:
+    
+            balance = self.historyDoc['balance']['amount']/100
+            balanceUD = round(balance/self.UD, 2)
 
         # Get currency
         currency = self.historyDoc['node']['peer']['currency']

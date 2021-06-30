@@ -44,7 +44,10 @@ class Balance:
             message = ast.literal_eval(str(e))["message"]
             sys.stderr.write("Echec de récupération du solde:\n" + message + "\n")
             sys.exit(1)
+            
+        if (balanceResult['balance'] == None): balanceValue = 'null'
+        else:
+            balanceValue = balanceResult['balance']['amount']/100
 
-        balanceValue = balanceResult['balance']['amount']/100
         # print(balanceValue)
         return balanceValue
