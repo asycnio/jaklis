@@ -46,7 +46,7 @@ class Transaction:
         if self.verbose: print("useMempool:", str(self.useMempool))
         queryBuild = gql(
             """
-            query ($recipient: String!, $issuer: String!, $amount: Int!, $comment: String!, $useMempool: Boolean!){ genTx(
+            query ($recipient: PkOrScriptGva!, $issuer: PubKeyGva!, $amount: Int!, $comment: String!, $useMempool: Boolean!){ genTx(
             amount: $amount
             comment: $comment
             issuer: $issuer
