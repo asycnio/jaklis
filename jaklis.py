@@ -6,7 +6,7 @@ from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 MY_PATH = os.path.realpath(os.path.dirname(sys.argv[0])) + '/'
 
@@ -39,6 +39,7 @@ history_cmd = subparsers.add_parser('history', help="Voir l'historique des trans
 balance_cmd = subparsers.add_parser('balance', help="Voir le solde d'un compte Ḡ1")
 id_cmd = subparsers.add_parser('id', help="Voir l'identité d'une clé publique/username")
 id_balance_cmd = subparsers.add_parser('idBalance', help="Voir l'identité d'une clé publique/username et son solde")
+currentUd = subparsers.add_parser('currentUd', help="Affiche la montant actuel du dividende Universel")
 
 # Messages management
 read_cmd.add_argument('-n', '--number',type=int, default=3, help="Affiche les NUMBER derniers messages")
@@ -99,6 +100,7 @@ balance_cmd.add_argument('-m', '--mempool', action='store_true', help="Utilise l
 id_cmd.add_argument('-p', '--pubkey', help="Clé publique du compte visé")
 id_cmd.add_argument('-u', '--username', help="Username du compte visé")
 id_balance_cmd.add_argument('-p', '--pubkey', help="Pubkey du compte visé")
+currentUd.add_argument('-p', '--pubkey', help="Pubkey du compte visé")
 
 
 args = parser.parse_args()
@@ -225,7 +227,7 @@ if cmd in ("read","send","delete","set","get","erase","stars","unstars","getoffe
         cesium.deleteOffer(args.id)
 
 # Construct GVA object
-elif cmd in ("pay","history","balance","id","idBalance"):
+elif cmd in ("pay","history","balance","id","idBalance","currentUd"):
     from lib.gva import GvaApi
 
     if args.node:
@@ -252,6 +254,8 @@ elif cmd in ("pay","history","balance","id","idBalance"):
         gva.id(args.pubkey, args.username)
     elif cmd == "idBalance":
         gva.idBalance(args.pubkey)
+    elif cmd == "currentUd":
+        gva.currentUd()
 
 
 if keyPath:

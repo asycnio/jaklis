@@ -1,3 +1,4 @@
+from lib.currentUd import currentUd
 import sys, re
 from lib.natools import get_privkey
 from lib.gvaPay import Transaction, PUBKEY_REGEX
@@ -65,6 +66,11 @@ class GvaApi():
         print(result)
 
     def idBalance(self, pubkey):
-            gva = Id(self.dunikey, self.node, pubkey)
-            result = gva.sendDoc(True)
-            print(result)
+        gva = Id(self.dunikey, self.node, pubkey)
+        result = gva.sendDoc(True)
+        print(result)
+    
+    def currentUd(self):
+        gva = currentUd(self.node)
+        result = gva.sendDoc()
+        print(result)
