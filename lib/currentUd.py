@@ -6,8 +6,6 @@ from lib.natools import fmt, sign, get_privkey
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
-PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
-
 class currentUd:
 
     def __init__(self, node):
@@ -16,7 +14,7 @@ class currentUd:
         self.client = Client(transport=transport, fetch_schema_from_transport=True)
 
     def sendDoc(self):
-        # Build balance generation document
+        # Build UD generation document
         queryBuild = gql(
             """
             query {
@@ -29,7 +27,7 @@ class currentUd:
         paramsBuild = {
         }
 
-        # Send balance document
+        # Send UD document
         try:
             udValue = self.client.execute(queryBuild, variable_values=paramsBuild)
         except Exception as e:
@@ -39,5 +37,4 @@ class currentUd:
             
         udValueFinal = udValue['currentUd']['amount']
     
-        # print(balanceValue)
         return udValueFinal
