@@ -1,7 +1,7 @@
 wheel
 base58
 pybase64
-duniterpy==0.58.1
+duniterpy==0.62.0
 termcolor
 python-dotenv
 gql==3.0.0a5
