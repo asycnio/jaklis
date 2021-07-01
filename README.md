@@ -13,7 +13,7 @@ Débrouillez-vous.
 
 ## Utilisation
 
-*Python 3.9 minimum*
+*Python 3.6 minimum*
 
 Renseignez optionnellement le fichier **.env** (Généré lors de la première tentative d'execution, ou à copier depuis .env.template).
 

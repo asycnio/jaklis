@@ -16,8 +16,19 @@ if not os.path.isfile(MY_PATH + '.env'):
 dotenv_path = join(dirname(__file__),MY_PATH +  '.env')
 load_dotenv(dotenv_path)
 
+# Set global values (default parameters) , regarding variables environments
+node = os.getenv('NODE')
+if not node:
+    node="https://g1.librelois.fr/gva"
+
+pod = os.getenv('POD')
+if not pod:
+    pod="https://g1.data.le-sou.org"
+
+destPubkey = False
+
 # Parse arguments
-parser = argparse.ArgumentParser(description="Client CLI pour Cesium+ et Ḡchange")
+parser = argparse.ArgumentParser(description="Client CLI pour Cesium+ et Ḡchange", epilog="current node: '" + node + "', current pod: '" + pod + "'.")
 parser.add_argument('-v', '--version', action='store_true', help="Affiche la version actuelle du programme")
 parser.add_argument('-k', '--key', help="Chemin vers mon trousseau de clé (PubSec)")
 parser.add_argument('-n', '--node', help="Adresse du noeud Cesium+, Gchange ou Duniter à utiliser")
@@ -124,7 +135,7 @@ def createTmpDunikey():
 
     key = SigningKey.from_credentials(getpass.getpass("Identifiant: "), getpass.getpass("Mot de passe: "), None)
     key.save_pubsec_file(keyPath)
-    
+
     return keyPath
 
 # Check if we need dunikey
@@ -170,10 +181,6 @@ if cmd in ("read","send","delete","set","get","erase","stars","unstars","getoffe
 
     if args.node:
         pod = args.node
-    else:
-        pod = os.getenv('POD')
-    if not pod:
-        pod="https://g1.data.le-sou.org"
 
     cesium = CesiumPlus(dunikey, pod, noNeedDunikey)
 
@@ -232,15 +239,9 @@ elif cmd in ("pay","history","balance","id","idBalance","currentUd"):
 
     if args.node:
         node = args.node
-    else:
-        node = os.getenv('NODE')
-    if not node:
-        node="https://g1.librelois.fr/gva"
 
     if args.pubkey:
         destPubkey = args.pubkey
-    else:
-        destPubkey = False
 
     gva = GvaApi(dunikey, node, destPubkey, noNeedDunikey)
 
