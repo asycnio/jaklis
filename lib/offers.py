@@ -26,7 +26,7 @@ class Offers(CesiumCommon):
             data['thumbnail']['_content_type'] = "image/png"
         # if category: data['category'] = category
         # else: 
-        data['category'] = {"parent":"cat90","localizedNames":{"en":"Fruits &amp; Vegetables","es-ES":"Frutas y Vegetales","fr-FR":"Fruits &amp; Légumes"},"name":"Fruits &amp; Légumes","id":"cat92"}
+        data['category'] = {"parent":"cat24","localizedNames":{"en":"DVD / Films","es-ES":"DVDs / Cine","fr-FR":"DVD / Films"},"name":"DVD / Films","id":"cat25"}
         if price: data['price'] = float(price) * 100
         data['type'] = 'offer'
         data['time'] = timeSent
