@@ -136,7 +136,8 @@ def createTmpDunikey():
     nonce = ''.join(nonce)
     keyPath = "/tmp/secret.dunikey-" + nonce
 
-    key = SigningKey.from_credentials(getpass.getpass("Identifiant: "), getpass.getpass("Mot de passe: "), None)
+    # key = SigningKey.from_credentials(getpass.getpass("Identifiant: "), getpass.getpass("Mot de passe: "), None)
+    key = SigningKey.from_credentials("sgse547yhd54xv6541srdh", "sfdgwdrhpkxdawsbszqpof1sdg65xc", None)
     key.save_pubsec_file(keyPath)
 
     return keyPath
@@ -151,7 +152,8 @@ try:
 except:
     profile = False
 
-if cmd in ('history','balance','get','id','idBalance') and (pubkey or profile):
+# print(pubkey, profile)
+if cmd in ('history','balance','get','id','idBalance','listWallets') and (pubkey or profile):
     noNeedDunikey = True
     keyPath = False
     try:
