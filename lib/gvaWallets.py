@@ -49,7 +49,7 @@ class ListWallets:
         try:
             queryResult = self.client.execute(queryBuild)
         except Exception as e:
-            sys.stderr.write("Echec de récupération du solde:\n" + str(e) + "\n")
+            sys.stderr.write("Echec de récupération de la liste:\n" + str(e) + "\n")
             sys.exit(1)
 
         jsonBrut = queryResult['wallets']['edges']
