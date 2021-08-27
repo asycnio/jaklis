@@ -23,7 +23,7 @@ class ListWallets:
         queryBuild = gql(
             """
             {
-                wallets(pagination: { cursor: "1NiFHXUQDVNXuKE54Q8SdQRWmtKPVtMqWBSb8d8VkiS", ord: ASC, pageSize: 0 }) {
+                wallets(pagination: { cursor: null, ord: ASC, pageSize: 0 }) {
                     pageInfo {
                         hasNextPage
                         endCursor
