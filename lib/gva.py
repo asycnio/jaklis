@@ -1,4 +1,5 @@
 from lib.currentUd import currentUd
+from lib.gvaWallets import ListWallets
 import sys, re
 from lib.natools import get_privkey
 from lib.gvaPay import Transaction, PUBKEY_REGEX
@@ -74,3 +75,11 @@ class GvaApi():
         gva = currentUd(self.node)
         result = gva.sendDoc()
         print(result)
+        
+    def listWallets(self, getBalance, brut):
+        gva = ListWallets(self.node, getBalance, brut)
+        result = gva.sendDoc(getBalance, brut)
+        if brut:
+            print("\n".join(result))
+        else:
+            print(result)
