@@ -114,7 +114,10 @@ id_cmd.add_argument('-u', '--username', help="Username du compte visé")
 id_balance_cmd.add_argument('-p', '--pubkey', help="Pubkey du compte visé")
 currentUd.add_argument('-p', '--pubkey', help="Pubkey du compte visé")
 listWallets.add_argument('-b', '--balance', action='store_true', help="Affiche les soldes")
-listWallets.add_argument('--brut', action='store_true', help="Affiche une liste de pubkey brut")
+listWallets.add_argument('--mbr', action='store_true', help="Affiche la liste de pubkey membres brut")
+listWallets.add_argument('--non_mbr', action='store_true', help="Affiche la liste de pubkey des identités non membres brut")
+listWallets.add_argument('--larf', action='store_true', help="Affiche la liste des pubkey non membres brut")
+listWallets.add_argument('--brut', action='store_true', help="Affiche la liste de toutes les pubkey brut")
 listWallets.add_argument('-p', '--pubkey', help="useless but needed")
 
 args = parser.parse_args()
@@ -263,7 +266,7 @@ elif cmd in ("pay","history","balance","id","idBalance","currentUd","listWallets
     elif cmd == "currentUd":
         gva.currentUd()
     elif cmd == "listWallets":
-        gva.listWallets(args.balance, args.brut)
+        gva.listWallets(args.brut, args.mbr, args.non_mbr, args.larf)
 
 
 if keyPath:

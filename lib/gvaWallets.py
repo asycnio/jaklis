@@ -10,14 +10,16 @@ PUBKEY_REGEX = "(?![OIl])[1-9A-Za-z]{42,45}"
 
 class ListWallets:
 
-    def __init__(self, node, getBalance, brut):
-        self.getBalance = getBalance
+    def __init__(self, node, brut, mbr, nonMbr, larf):
+        self.mbr = mbr
+        self.larf = larf
+        self.nonMbr = nonMbr
         self.brut = brut
         # Define Duniter GVA node
         transport = AIOHTTPTransport(url=node)
         self.client = Client(transport=transport, fetch_schema_from_transport=True)
 
-    def sendDoc(self, getBalance=True, brut=False):
+    def sendDoc(self):
         # Build wallets generation document
        
         queryBuild = gql(
@@ -55,20 +57,18 @@ class ListWallets:
         jsonBrut = queryResult['wallets']['edges']
         
         walletList = []
-        if (brut):
-            names = []
-            for dictionary in jsonBrut:
-                dataWork = dictionary['node']
-                if "script" in dataWork:
-                    names.append(dataWork["script"])
-            
-            return names
-        else:
-            for i, trans in enumerate(jsonBrut):
-                dataWork = trans['node']
-                walletList.append(i)
-                walletList[i] = {}
-                walletList[i]['pubkey'] = dataWork['script']
-                walletList[i]['id'] = dataWork['idty']            
+        for i, trans in enumerate(jsonBrut):
+            dataWork = trans['node']
+            if (self.mbr and (dataWork['idty'] == None or dataWork['idty']['isMember'] == False)): continue
+            if (self.nonMbr and (dataWork['idty'] == None or dataWork['idty']['isMember'] == True)): continue
+            if (self.larf and (dataWork['idty'] != None)): continue
+            walletList.append({'pubkey': dataWork['script'],'balance': dataWork['balance']['amount'],'id': dataWork['idty']})
 
+        if (self.brut):
+            names = []
+            for dataWork in walletList:
+                names.append(dataWork["pubkey"])
+            
+            return "\n".join(names)
+        else:
             return json.dumps(walletList, indent=2)

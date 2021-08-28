@@ -76,10 +76,8 @@ class GvaApi():
         result = gva.sendDoc()
         print(result)
         
-    def listWallets(self, getBalance, brut):
-        gva = ListWallets(self.node, getBalance, brut)
-        result = gva.sendDoc(getBalance, brut)
-        if brut:
-            print("\n".join(result))
-        else:
-            print(result)
+    def listWallets(self, brut, brutMbr, brutNonMbr, brutLarf):
+        gva = ListWallets(self.node, brut, brutMbr, brutNonMbr, brutLarf)
+        result = gva.sendDoc()
+        
+        print(result)
