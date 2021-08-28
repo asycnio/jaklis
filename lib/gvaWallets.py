@@ -67,7 +67,7 @@ class ListWallets:
         if (self.brut):
             names = []
             for dataWork in walletList:
-                if (self.mbr):
+                if (self.mbr or self.nonMbr):
                     names.append(dataWork['pubkey'] + ' ' + dataWork['id']['username'])
                 else:
                     names.append(dataWork['pubkey'])
