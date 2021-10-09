@@ -80,5 +80,3 @@ Effacer mon profile Gchange:
 ```
 ./jaklis.py -n https://data.gchange.fr erase
 ```
-
-tata
