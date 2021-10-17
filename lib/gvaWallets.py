@@ -21,7 +21,7 @@ class ListWallets:
 
     def sendDoc(self):
         # Build wallets generation document
-       
+
         queryBuild = gql(
             """
             {
@@ -55,14 +55,14 @@ class ListWallets:
             sys.exit(1)
 
         jsonBrut = queryResult['wallets']['edges']
-        
+
         walletList = []
         for i, trans in enumerate(jsonBrut):
             dataWork = trans['node']
             if (self.mbr and (dataWork['idty'] == None or dataWork['idty']['isMember'] == False)): continue
             if (self.nonMbr and (dataWork['idty'] == None or dataWork['idty']['isMember'] == True)): continue
             if (self.larf and (dataWork['idty'] != None)): continue
-            walletList.append({'pubkey': dataWork['script'],'balance': dataWork['balance']['amount'],'id': dataWork['idty']})
+            walletList.append({'pubkey': dataWork['script'],'balance': dataWork['balance']['amount']/100,'id': dataWork['idty']})
 
         if (self.brut):
             names = []
@@ -71,7 +71,7 @@ class ListWallets:
                     names.append(dataWork['pubkey'] + ' ' + dataWork['id']['username'])
                 else:
                     names.append(dataWork['pubkey'])
-            
+
             return "\n".join(names)
         else:
             return json.dumps(walletList, indent=2)
