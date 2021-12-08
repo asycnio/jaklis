@@ -6,9 +6,9 @@ from shutil import copyfile
 from dotenv import load_dotenv
 from duniterpy.key import SigningKey
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
-MY_PATH = os.path.realpath(os.path.dirname(sys.argv[0])) + '/'
+MY_PATH = os.path.realpath(sys.argv[0]).replace('jaklis.py','')
 
 # Get variables environment
 if not os.path.isfile(MY_PATH + '.env'):
@@ -19,11 +19,11 @@ load_dotenv(dotenv_path)
 # Set global values (default parameters) , regarding variables environments
 node = os.getenv('NODE')
 if not node:
-    node="https://g1.librelois.fr/gva"
+    node="https://duniter-g1.p2p.legal/gva"
 
 pod = os.getenv('POD')
 if not pod:
-    pod="https://g1.data.le-sou.org"
+    pod="https://g1.data.e-is.pro"
 
 destPubkey = False
 
