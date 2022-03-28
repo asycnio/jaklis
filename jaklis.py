@@ -17,11 +17,11 @@ dotenv_path = join(dirname(__file__),MY_PATH +  '.env')
 load_dotenv(dotenv_path)
 
 # Set global values (default parameters) , regarding variables environments
-node = os.getenv('NODE')
+node = os.getenv('DUNITER') + '/gva'
 if not node:
     node="https://duniter-g1.p2p.legal/gva"
 
-pod = os.getenv('POD')
+pod = os.getenv('ESNODE')
 if not pod:
     pod="https://g1.data.e-is.pro"
 
