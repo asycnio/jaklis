@@ -131,11 +131,18 @@ class ReadFromCesium(CesiumCommon):
 
                 try:
                     self.title = decrypt(msgSrc["title"])
+                except Exception as e:
+                    self.title = "jaklis can't read that mother fucker"
+                    # sys.stderr.write(colored(str('Error decrypt message title: ' + str(e)), 'red') + '\n')
+                    # pp_json(hits)
+
+                try:
                     self.content = decrypt(msgSrc["content"])
                 except Exception as e:
-                    sys.stderr.write(colored(str(e), 'red') + '\n')
-                    pp_json(hits)
-                    continue
+                    self.content = "jaklis can't read that mother fucker"
+                    # sys.stderr.write(colored(str('Error decrypt message content: ' + str(e)), 'red') + '\n')
+                    # pp_json(hits)
+                    
 
                 data.append(i)
                 data[i] = {}
@@ -144,6 +151,7 @@ class ReadFromCesium(CesiumCommon):
                 data[i]['pubkey'] = pubkey
                 data[i]['title'] = self.title
                 data[i]['content'] = self.content
+                # print('toto')
 
             data = json.dumps(data, indent=2)
             return data
