@@ -68,7 +68,10 @@ class ReadFromCesium(CesiumCommon):
                 msgSrc = hits["_source"]
                 self.issuer = msgSrc["issuer"]
                 nonce = msgSrc["nonce"]
-                nonce = base58.b58decode(nonce)
+                try:
+                    nonce = base58.b58decode(nonce)
+                except:
+                    nonce = base58.b58decode('5aZdSqKGHBqm2uMPwN6XnfiiJKRieb1Hh')
                 self.dateS = msgSrc["time"]
                 date = datetime.fromtimestamp(self.dateS).strftime(", le %d/%m/%Y à %H:%M  ")
                 if outbox:
@@ -115,7 +118,12 @@ class ReadFromCesium(CesiumCommon):
                 msgSrc = hits["_source"]
                 self.issuer = msgSrc["issuer"]
                 nonce = msgSrc["nonce"]
-                nonce = base58.b58decode(nonce)
+                print(nonce)
+                try:
+                    nonce = base58.b58decode(nonce)
+                except:
+                    nonce = base58.b58decode('5aZdSqKGHBqm2uMPwN6XnfiiJKRieb1Hh')
+                print('tata')
                 self.date = msgSrc["time"]
 
                 if outbox:
