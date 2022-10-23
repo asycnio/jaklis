@@ -46,6 +46,7 @@ class ReadFromCesium(CesiumCommon):
     # Parse JSON result and display messages
     def readMessages(self, msgJSON, nbrMsg, outbox):
         def decrypt(msg):
+            if msg is None: return ''
             msg64 = base64.b64decode(msg)
             return box_decrypt(msg64, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
 
@@ -94,6 +95,7 @@ class ReadFromCesium(CesiumCommon):
     # Parse JSON result and display messages
     def jsonMessages(self, msgJSON, nbrMsg, outbox):
         def decrypt(msg):
+            if msg is None: return ''
             msg64 = base64.b64decode(msg)
             return box_decrypt(msg64, get_privkey(self.dunikey, "pubsec"), self.issuer, nonce).decode()
 

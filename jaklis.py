@@ -19,7 +19,7 @@ load_dotenv(dotenv_path)
 # Set global values (default parameters) , regarding variables environments
 node = os.getenv('DUNITER') + '/gva'
 if not node:
-    node="https://duniter-g1.p2p.legal/gva"
+    node="https://g1.librelois.fr/gva"
 
 pod = os.getenv('ESNODE')
 if not pod:
@@ -38,6 +38,7 @@ read_cmd = subparsers.add_parser('read', help="Lecture des messages")
 send_cmd = subparsers.add_parser('send', help="Envoi d'un message")
 delete_cmd = subparsers.add_parser('delete', help="Supression d'un message")
 getProfile_cmd = subparsers.add_parser('get', help="Voir un profile Cesium+")
+getPage_cmd = subparsers.add_parser('page', help="Voir une page Cesium+")
 setProfile_cmd = subparsers.add_parser('set', help="Configurer son profile Cesium+")
 eraseProfile_cmd = subparsers.add_parser('erase', help="Effacer son profile Cesium+")
 stars_cmd = subparsers.add_parser('stars', help="Voir les étoiles d'un profile / Noter un profile (option -s NOTE)")
@@ -78,6 +79,9 @@ setProfile_cmd.add_argument('-A', '--avatar', help="Chemin vers mon avatar en PN
 
 getProfile_cmd.add_argument('-p', '--profile', help="Nom du profile")
 getProfile_cmd.add_argument('-a', '--avatar', action='store_true', help="Récupérer également l'avatar au format raw base64")
+
+getPage_cmd.add_argument('-p', '--page', help="Nom de la page")
+getPage_cmd.add_argument('-a', '--avatar', action='store_true', help="Récupérer également l'avatar au format raw base64")
 
 # Likes management
 stars_cmd.add_argument('-p', '--profile', help="Profile cible")
@@ -156,7 +160,7 @@ except:
     profile = False
 
 # print(pubkey, profile)
-if cmd in ('history','balance','get','id','idBalance','listWallets') and (pubkey or profile):
+if cmd in ('history','balance','get','page','id','idBalance','listWallets') and (pubkey or profile):
     noNeedDunikey = True
     keyPath = False
     try:
@@ -184,7 +188,7 @@ else:
 
 
 # Construct CesiumPlus object
-if cmd in ("read","send","delete","set","get","erase","stars","unstars","getoffer","setoffer","deleteoffer"):
+if cmd in ("read","send","delete","set","get","page","erase","stars","unstars","getoffer","setoffer","deleteoffer"):
     from lib.cesium import CesiumPlus
 
     if args.node:
@@ -221,6 +225,8 @@ if cmd in ("read","send","delete","set","get","erase","stars","unstars","getoffe
         cesium.set(args.name, args.description, args.ville, args.adresse, args.position, args.site, args.avatar)
     elif cmd == "get":
         cesium.get(args.profile, args.avatar)
+    elif cmd == "page":
+        cesium.getPage(args.page, args.avatar)
     elif cmd == "erase":
         cesium.erase()
 

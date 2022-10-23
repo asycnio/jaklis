@@ -1,5 +1,6 @@
 import re, string, random, base64
 from lib.cesiumCommon import CesiumCommon, PUBKEY_REGEX
+from lib.getPages import Pages
 from lib.messaging import ReadFromCesium, SendToCesium, DeleteFromCesium
 from lib.profiles import Profiles
 from lib.stars import ReadLikes, SendLikes, UnLikes
@@ -60,6 +61,21 @@ class CesiumPlus(CesiumCommon):
         document = getProfile.configDocGet(profile, scope, avatar)
         resultJSON = getProfile.sendDocument(document, 'get')
         result = getProfile.parseJSON(resultJSON)
+
+        print(result)
+        
+    def getPage(self, page=None, avatar=None):
+        getPage = Pages(self.dunikey,  self.pod, self.noNeedDunikey)
+        if not page:
+            page = self.pubkey
+        if not re.match(PUBKEY_REGEX, page) or len(page) > 45:
+            scope = 'title'
+        else:
+            scope = '_id'
+        
+        document = getPage.configDocGet(page, scope, avatar)
+        resultJSON = getPage.sendDocument(document, 'get')
+        result = getPage.parseJSON(resultJSON)
 
         print(result)
 
