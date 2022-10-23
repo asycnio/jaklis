@@ -118,12 +118,10 @@ class ReadFromCesium(CesiumCommon):
                 msgSrc = hits["_source"]
                 self.issuer = msgSrc["issuer"]
                 nonce = msgSrc["nonce"]
-                print(nonce)
                 try:
                     nonce = base58.b58decode(nonce)
                 except:
                     nonce = base58.b58decode('5aZdSqKGHBqm2uMPwN6XnfiiJKRieb1Hh')
-                print('tata')
                 self.date = msgSrc["time"]
 
                 if outbox:
