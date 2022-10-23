@@ -39,6 +39,7 @@ class GvaApi():
     #################### Payments ####################
 
     def pay(self, amount, comment, mempool, verbose):
+        comment = " ".join(comment)
         gva = Transaction(self.dunikey, self.node, self.destPubkey, amount, comment, mempool, verbose)
         gva.genDoc()
         gva.checkTXDoc()

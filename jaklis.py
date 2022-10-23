@@ -102,7 +102,7 @@ deleteoffer_cmd.add_argument('-i', '--id', help="Annonce cible à supprimer")
 # GVA usage
 pay_cmd.add_argument('-p', '--pubkey', help="Destinataire du paiement")
 pay_cmd.add_argument('-a', '--amount', type=float, help="Montant de la transaction")
-pay_cmd.add_argument('-c', '--comment',  default="", help="Commentaire de la transaction")
+pay_cmd.add_argument('-c', '--comment', default="", help="Commentaire de la transaction", nargs='*')
 pay_cmd.add_argument('-m', '--mempool', action='store_true', help="Utilise les sources en Mempool")
 pay_cmd.add_argument('-v', '--verbose', action='store_true', help="Affiche le résultat JSON de la transaction")
 
